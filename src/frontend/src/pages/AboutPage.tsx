@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Mail } from "lucide-react";
 import { useEffect } from "react";
 import { SiInstagram, SiLinkedin, SiX } from "react-icons/si";
+import type { AboutContent } from "../backend.d";
+import { useActor } from "../hooks/useActor";
 
 const VALUES = [
   {
@@ -55,10 +58,53 @@ const WHAT_I_WRITE = [
   },
 ];
 
+const DEFAULT_BIO_SECTIONS = [
+  {
+    heading: "Forest Service & Career",
+    body: "A member of the Indian Forest Service, posted in one of India's biodiversity-rich landscapes. The work spans wildlife protection, community engagement, anti-poaching operations, forest policy implementation, and the endless negotiation between human needs and ecological imperatives.\n\nThe IFS is one of those careers where the work is never abstract. Every decision lands somewhere real — on a tiger corridor, on a tribal community's livelihood, on a river's health. That groundedness is both a discipline and a gift.",
+  },
+  {
+    heading: "Academic Background",
+    body: "Academic training in the natural sciences, with sustained independent study in international relations, strategic affairs, and the political economy of conservation. The IFS prepares you for the field; the rest you build yourself.",
+  },
+  {
+    heading: "Interest in Geopolitics & Strategy",
+    body: "India's forests are not isolated from its geopolitics. Shared river systems, transboundary wildlife corridors, climate diplomacy, the strategic use of environmental agreements — these connect the canopy to the Security Council in ways rarely mapped. That intersection is where a significant part of this writing lives.",
+  },
+  {
+    heading: "Personal Philosophy",
+    body: "Depth over breadth. Sustained attention over quick takes. A willingness to sit with difficult questions longer than is comfortable — in the forest, in policy, in one's own thinking. Writing is one way of forcing that patience on oneself.\n\nThis platform is an attempt at building something durable: a long-term archive of honest thinking from a practitioner's vantage point, not a pundit's perch.",
+  },
+];
+
 export default function AboutPage() {
+  const { actor, isFetching } = useActor();
+  const { data: aboutData } = useQuery<AboutContent | null>({
+    queryKey: ["aboutContent"],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getAboutContent();
+    },
+    enabled: !!actor && !isFetching,
+  });
+
   useEffect(() => {
     document.title = "About Shubham Vats — Indian Forest Service Officer";
   }, []);
+
+  const portraitUrl =
+    aboutData?.portraitUrl ||
+    "/assets/generated/portrait-placeholder.dim_600x750.jpg";
+  const contactEmail = aboutData?.email || "contact@vatsinthewild.in";
+  const linkedinUrl =
+    aboutData?.socialLinks?.linkedin || "https://linkedin.com";
+  const twitterUrl = aboutData?.socialLinks?.twitter || "https://x.com";
+  const instagramUrl =
+    aboutData?.socialLinks?.instagram || "https://instagram.com";
+  const bioSections =
+    aboutData?.bioSections && aboutData.bioSections.length > 0
+      ? aboutData.bioSections
+      : DEFAULT_BIO_SECTIONS;
 
   return (
     <div className="pt-16">
@@ -86,7 +132,7 @@ export default function AboutPage() {
               <div className="relative max-w-sm">
                 <div className="aspect-[4/5] overflow-hidden rounded-sm">
                   <img
-                    src="/assets/generated/portrait-placeholder.dim_600x750.jpg"
+                    src={portraitUrl}
                     alt="Shubham Vats"
                     className="w-full h-full object-cover"
                   />
@@ -97,15 +143,15 @@ export default function AboutPage() {
               {/* Contact quick links */}
               <div className="mt-10 space-y-3">
                 <a
-                  href="mailto:contact@vatsinthewild.in"
+                  href={`mailto:${contactEmail}`}
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <Mail size={14} />
-                  contact@vatsinthewild.in
+                  {contactEmail}
                 </a>
                 <div className="flex gap-3 pt-1">
                   <a
-                    href="https://linkedin.com"
+                    href={linkedinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="LinkedIn"
@@ -114,7 +160,7 @@ export default function AboutPage() {
                     <SiLinkedin size={16} />
                   </a>
                   <a
-                    href="https://x.com"
+                    href={twitterUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Twitter/X"
@@ -123,7 +169,7 @@ export default function AboutPage() {
                     <SiX size={16} />
                   </a>
                   <a
-                    href="https://instagram.com"
+                    href={instagramUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Instagram"
@@ -138,59 +184,22 @@ export default function AboutPage() {
             {/* Text */}
             <div className="lg:col-span-3 space-y-8">
               <div className="space-y-5 text-base text-muted-foreground leading-relaxed">
-                <h2 className="font-display text-2xl font-semibold text-foreground">
-                  Forest Service & Career
-                </h2>
-                <p>
-                  A member of the Indian Forest Service, posted in one of
-                  India's biodiversity-rich landscapes. The work spans wildlife
-                  protection, community engagement, anti-poaching operations,
-                  forest policy implementation, and the endless negotiation
-                  between human needs and ecological imperatives.
-                </p>
-                <p>
-                  The IFS is one of those careers where the work is never
-                  abstract. Every decision lands somewhere real — on a tiger
-                  corridor, on a tribal community's livelihood, on a river's
-                  health. That groundedness is both a discipline and a gift.
-                </p>
-
-                <h2 className="font-display text-2xl font-semibold text-foreground pt-4">
-                  Academic Background
-                </h2>
-                <p>
-                  Academic training in the natural sciences, with sustained
-                  independent study in international relations, strategic
-                  affairs, and the political economy of conservation. The IFS
-                  prepares you for the field; the rest you build yourself.
-                </p>
-
-                <h2 className="font-display text-2xl font-semibold text-foreground pt-4">
-                  Interest in Geopolitics & Strategy
-                </h2>
-                <p>
-                  India's forests are not isolated from its geopolitics. Shared
-                  river systems, transboundary wildlife corridors, climate
-                  diplomacy, the strategic use of environmental agreements —
-                  these connect the canopy to the Security Council in ways
-                  rarely mapped. That intersection is where a significant part
-                  of this writing lives.
-                </p>
-
-                <h2 className="font-display text-2xl font-semibold text-foreground pt-4">
-                  Personal Philosophy
-                </h2>
-                <p>
-                  Depth over breadth. Sustained attention over quick takes. A
-                  willingness to sit with difficult questions longer than is
-                  comfortable — in the forest, in policy, in one's own thinking.
-                  Writing is one way of forcing that patience on oneself.
-                </p>
-                <p>
-                  This platform is an attempt at building something durable: a
-                  long-term archive of honest thinking from a practitioner's
-                  vantage point, not a pundit's perch.
-                </p>
+                {bioSections.map((section, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: sections are ordered and not individually keyed
+                  <div key={index}>
+                    {section.heading && (
+                      <h2
+                        className={`font-display text-2xl font-semibold text-foreground ${index > 0 ? "pt-4" : ""}`}
+                      >
+                        {section.heading}
+                      </h2>
+                    )}
+                    {section.body?.split("\n\n").map((para, pIndex) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: paragraph order is deterministic
+                      <p key={pIndex}>{para}</p>
+                    ))}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -268,7 +277,7 @@ export default function AboutPage() {
             For research collaborations, interview requests, or substantive
             questions about the work.
           </p>
-          <a href="mailto:contact@vatsinthewild.in">
+          <a href={`mailto:${contactEmail}`}>
             <Button className="mt-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium tracking-wide">
               Send an Email
             </Button>

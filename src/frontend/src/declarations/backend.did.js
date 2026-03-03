@@ -8,6 +8,26 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const _CaffeineStorageCreateCertificateResult = IDL.Record({
+  'method' : IDL.Text,
+  'blob_hash' : IDL.Text,
+});
+export const _CaffeineStorageRefillInformation = IDL.Record({
+  'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const _CaffeineStorageRefillResult = IDL.Record({
+  'success' : IDL.Opt(IDL.Bool),
+  'topped_up_amount' : IDL.Opt(IDL.Nat),
+});
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const FileMetadata = IDL.Record({
+  'id' : IDL.Text,
+  'blob' : ExternalBlob,
+  'mimeType' : IDL.Text,
+  'uploadTimestamp' : IDL.Int,
+  'filename' : IDL.Text,
+  'sizeBytes' : IDL.Nat,
+});
 export const ReadingRecommendation = IDL.Record({
   'title' : IDL.Text,
   'link' : IDL.Opt(IDL.Text),
@@ -38,6 +58,21 @@ export const Post = IDL.Record({
   'excerpt' : IDL.Text,
   'category' : Category,
 });
+export const BioSection = IDL.Record({
+  'body' : IDL.Text,
+  'heading' : IDL.Text,
+});
+export const SocialLinks = IDL.Record({
+  'linkedin' : IDL.Text,
+  'twitter' : IDL.Text,
+  'instagram' : IDL.Text,
+});
+export const AboutContent = IDL.Record({
+  'bioSections' : IDL.Vec(BioSection),
+  'socialLinks' : SocialLinks,
+  'email' : IDL.Text,
+  'portraitUrl' : IDL.Text,
+});
 export const Quote = IDL.Record({
   'text' : IDL.Text,
   'isActive' : IDL.Bool,
@@ -45,18 +80,50 @@ export const Quote = IDL.Record({
 });
 
 export const idlService = IDL.Service({
+  '_caffeineStorageBlobIsLive' : IDL.Func(
+      [IDL.Vec(IDL.Nat8)],
+      [IDL.Bool],
+      ['query'],
+    ),
+  '_caffeineStorageBlobsToDelete' : IDL.Func(
+      [],
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      ['query'],
+    ),
+  '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+      [IDL.Vec(IDL.Vec(IDL.Nat8))],
+      [],
+      [],
+    ),
+  '_caffeineStorageCreateCertificate' : IDL.Func(
+      [IDL.Text],
+      [_CaffeineStorageCreateCertificateResult],
+      [],
+    ),
+  '_caffeineStorageRefillCashier' : IDL.Func(
+      [IDL.Opt(_CaffeineStorageRefillInformation)],
+      [_CaffeineStorageRefillResult],
+      [],
+    ),
+  '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+  'addFileMetadata' : IDL.Func([FileMetadata], [], []),
   'addRecommendation' : IDL.Func([ReadingRecommendation], [], []),
   'createPost' : IDL.Func([Post], [], []),
   'createQuote' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'deleteFileMetadata' : IDL.Func([IDL.Text], [], []),
   'deletePost' : IDL.Func([IDL.Text], [], []),
   'deleteRecommendation' : IDL.Func([IDL.Text], [], []),
+  'getAboutContent' : IDL.Func([], [IDL.Opt(AboutContent)], ['query']),
   'getActiveQuote' : IDL.Func([], [IDL.Opt(Quote)], ['query']),
   'getFeaturedPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'getFileById' : IDL.Func([IDL.Text], [IDL.Opt(FileMetadata)], ['query']),
   'getLatestPosts' : IDL.Func([IDL.Nat], [IDL.Vec(Post)], ['query']),
   'getPostBySlug' : IDL.Func([IDL.Text], [IDL.Opt(Post)], ['query']),
   'initialize' : IDL.Func([], [], []),
   'isInitialized' : IDL.Func([], [IDL.Bool], ['query']),
+  'listAllFiles' : IDL.Func([], [IDL.Vec(FileMetadata)], ['query']),
   'listAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'listFilesByType' : IDL.Func([IDL.Text], [IDL.Vec(FileMetadata)], ['query']),
   'listPostsByCategory' : IDL.Func([Category], [IDL.Vec(Post)], ['query']),
   'listPostsByTag' : IDL.Func([IDL.Text], [IDL.Vec(Post)], ['query']),
   'listQuotes' : IDL.Func([], [IDL.Vec(Quote)], ['query']),
@@ -71,10 +138,13 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'listSubscribers' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+  'replaceAllFiles' : IDL.Func([IDL.Vec(FileMetadata)], [], []),
+  'setAboutContent' : IDL.Func([AboutContent], [], []),
   'setActiveQuote' : IDL.Func([IDL.Text, IDL.Text], [], []),
   'subscribeNewsletter' : IDL.Func([IDL.Text], [], []),
   'toggleDraft' : IDL.Func([IDL.Text], [], []),
   'toggleFeatured' : IDL.Func([IDL.Text], [], []),
+  'updateFileMetadata' : IDL.Func([IDL.Text, FileMetadata], [], []),
   'updatePost' : IDL.Func([IDL.Text, Post], [], []),
   'updateRecommendation' : IDL.Func([IDL.Text, ReadingRecommendation], [], []),
 });
@@ -82,6 +152,26 @@ export const idlService = IDL.Service({
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const _CaffeineStorageCreateCertificateResult = IDL.Record({
+    'method' : IDL.Text,
+    'blob_hash' : IDL.Text,
+  });
+  const _CaffeineStorageRefillInformation = IDL.Record({
+    'proposed_top_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const _CaffeineStorageRefillResult = IDL.Record({
+    'success' : IDL.Opt(IDL.Bool),
+    'topped_up_amount' : IDL.Opt(IDL.Nat),
+  });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const FileMetadata = IDL.Record({
+    'id' : IDL.Text,
+    'blob' : ExternalBlob,
+    'mimeType' : IDL.Text,
+    'uploadTimestamp' : IDL.Int,
+    'filename' : IDL.Text,
+    'sizeBytes' : IDL.Nat,
+  });
   const ReadingRecommendation = IDL.Record({
     'title' : IDL.Text,
     'link' : IDL.Opt(IDL.Text),
@@ -112,6 +202,18 @@ export const idlFactory = ({ IDL }) => {
     'excerpt' : IDL.Text,
     'category' : Category,
   });
+  const BioSection = IDL.Record({ 'body' : IDL.Text, 'heading' : IDL.Text });
+  const SocialLinks = IDL.Record({
+    'linkedin' : IDL.Text,
+    'twitter' : IDL.Text,
+    'instagram' : IDL.Text,
+  });
+  const AboutContent = IDL.Record({
+    'bioSections' : IDL.Vec(BioSection),
+    'socialLinks' : SocialLinks,
+    'email' : IDL.Text,
+    'portraitUrl' : IDL.Text,
+  });
   const Quote = IDL.Record({
     'text' : IDL.Text,
     'isActive' : IDL.Bool,
@@ -119,18 +221,54 @@ export const idlFactory = ({ IDL }) => {
   });
   
   return IDL.Service({
+    '_caffeineStorageBlobIsLive' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [IDL.Bool],
+        ['query'],
+      ),
+    '_caffeineStorageBlobsToDelete' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        ['query'],
+      ),
+    '_caffeineStorageConfirmBlobDeletion' : IDL.Func(
+        [IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [],
+        [],
+      ),
+    '_caffeineStorageCreateCertificate' : IDL.Func(
+        [IDL.Text],
+        [_CaffeineStorageCreateCertificateResult],
+        [],
+      ),
+    '_caffeineStorageRefillCashier' : IDL.Func(
+        [IDL.Opt(_CaffeineStorageRefillInformation)],
+        [_CaffeineStorageRefillResult],
+        [],
+      ),
+    '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
+    'addFileMetadata' : IDL.Func([FileMetadata], [], []),
     'addRecommendation' : IDL.Func([ReadingRecommendation], [], []),
     'createPost' : IDL.Func([Post], [], []),
     'createQuote' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'deleteFileMetadata' : IDL.Func([IDL.Text], [], []),
     'deletePost' : IDL.Func([IDL.Text], [], []),
     'deleteRecommendation' : IDL.Func([IDL.Text], [], []),
+    'getAboutContent' : IDL.Func([], [IDL.Opt(AboutContent)], ['query']),
     'getActiveQuote' : IDL.Func([], [IDL.Opt(Quote)], ['query']),
     'getFeaturedPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'getFileById' : IDL.Func([IDL.Text], [IDL.Opt(FileMetadata)], ['query']),
     'getLatestPosts' : IDL.Func([IDL.Nat], [IDL.Vec(Post)], ['query']),
     'getPostBySlug' : IDL.Func([IDL.Text], [IDL.Opt(Post)], ['query']),
     'initialize' : IDL.Func([], [], []),
     'isInitialized' : IDL.Func([], [IDL.Bool], ['query']),
+    'listAllFiles' : IDL.Func([], [IDL.Vec(FileMetadata)], ['query']),
     'listAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'listFilesByType' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(FileMetadata)],
+        ['query'],
+      ),
     'listPostsByCategory' : IDL.Func([Category], [IDL.Vec(Post)], ['query']),
     'listPostsByTag' : IDL.Func([IDL.Text], [IDL.Vec(Post)], ['query']),
     'listQuotes' : IDL.Func([], [IDL.Vec(Quote)], ['query']),
@@ -145,10 +283,13 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'listSubscribers' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+    'replaceAllFiles' : IDL.Func([IDL.Vec(FileMetadata)], [], []),
+    'setAboutContent' : IDL.Func([AboutContent], [], []),
     'setActiveQuote' : IDL.Func([IDL.Text, IDL.Text], [], []),
     'subscribeNewsletter' : IDL.Func([IDL.Text], [], []),
     'toggleDraft' : IDL.Func([IDL.Text], [], []),
     'toggleFeatured' : IDL.Func([IDL.Text], [], []),
+    'updateFileMetadata' : IDL.Func([IDL.Text, FileMetadata], [], []),
     'updatePost' : IDL.Func([IDL.Text, Post], [], []),
     'updateRecommendation' : IDL.Func(
         [IDL.Text, ReadingRecommendation],

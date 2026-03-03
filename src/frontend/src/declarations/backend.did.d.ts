@@ -10,11 +10,27 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AboutContent {
+  'bioSections' : Array<BioSection>,
+  'socialLinks' : SocialLinks,
+  'email' : string,
+  'portraitUrl' : string,
+}
+export interface BioSection { 'body' : string, 'heading' : string }
 export type Category = { 'forest_field_notes' : null } |
   { 'personal_essays' : null } |
   { 'beyond_cutoff' : null } |
   { 'wild_within' : null } |
   { 'international_relations' : null };
+export type ExternalBlob = Uint8Array;
+export interface FileMetadata {
+  'id' : string,
+  'blob' : ExternalBlob,
+  'mimeType' : string,
+  'uploadTimestamp' : bigint,
+  'filename' : string,
+  'sizeBytes' : bigint,
+}
 export interface Post {
   'metaDescription' : [] | [string],
   'title' : string,
@@ -43,19 +59,56 @@ export interface ReadingRecommendation {
   'genre' : string,
   'addedAt' : bigint,
 }
+export interface SocialLinks {
+  'linkedin' : string,
+  'twitter' : string,
+  'instagram' : string,
+}
+export interface _CaffeineStorageCreateCertificateResult {
+  'method' : string,
+  'blob_hash' : string,
+}
+export interface _CaffeineStorageRefillInformation {
+  'proposed_top_up_amount' : [] | [bigint],
+}
+export interface _CaffeineStorageRefillResult {
+  'success' : [] | [boolean],
+  'topped_up_amount' : [] | [bigint],
+}
 export interface _SERVICE {
+  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
+  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+    [Array<Uint8Array>],
+    undefined
+  >,
+  '_caffeineStorageCreateCertificate' : ActorMethod<
+    [string],
+    _CaffeineStorageCreateCertificateResult
+  >,
+  '_caffeineStorageRefillCashier' : ActorMethod<
+    [[] | [_CaffeineStorageRefillInformation]],
+    _CaffeineStorageRefillResult
+  >,
+  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  'addFileMetadata' : ActorMethod<[FileMetadata], undefined>,
   'addRecommendation' : ActorMethod<[ReadingRecommendation], undefined>,
   'createPost' : ActorMethod<[Post], undefined>,
   'createQuote' : ActorMethod<[string, string], undefined>,
+  'deleteFileMetadata' : ActorMethod<[string], undefined>,
   'deletePost' : ActorMethod<[string], undefined>,
   'deleteRecommendation' : ActorMethod<[string], undefined>,
+  'getAboutContent' : ActorMethod<[], [] | [AboutContent]>,
   'getActiveQuote' : ActorMethod<[], [] | [Quote]>,
   'getFeaturedPosts' : ActorMethod<[], Array<Post>>,
+  'getFileById' : ActorMethod<[string], [] | [FileMetadata]>,
   'getLatestPosts' : ActorMethod<[bigint], Array<Post>>,
   'getPostBySlug' : ActorMethod<[string], [] | [Post]>,
   'initialize' : ActorMethod<[], undefined>,
   'isInitialized' : ActorMethod<[], boolean>,
+  'listAllFiles' : ActorMethod<[], Array<FileMetadata>>,
   'listAllPosts' : ActorMethod<[], Array<Post>>,
+  'listFilesByType' : ActorMethod<[string], Array<FileMetadata>>,
   'listPostsByCategory' : ActorMethod<[Category], Array<Post>>,
   'listPostsByTag' : ActorMethod<[string], Array<Post>>,
   'listQuotes' : ActorMethod<[], Array<Quote>>,
@@ -65,10 +118,13 @@ export interface _SERVICE {
     Array<ReadingRecommendation>
   >,
   'listSubscribers' : ActorMethod<[], Array<string>>,
+  'replaceAllFiles' : ActorMethod<[Array<FileMetadata>], undefined>,
+  'setAboutContent' : ActorMethod<[AboutContent], undefined>,
   'setActiveQuote' : ActorMethod<[string, string], undefined>,
   'subscribeNewsletter' : ActorMethod<[string], undefined>,
   'toggleDraft' : ActorMethod<[string], undefined>,
   'toggleFeatured' : ActorMethod<[string], undefined>,
+  'updateFileMetadata' : ActorMethod<[string, FileMetadata], undefined>,
   'updatePost' : ActorMethod<[string, Post], undefined>,
   'updateRecommendation' : ActorMethod<
     [string, ReadingRecommendation],

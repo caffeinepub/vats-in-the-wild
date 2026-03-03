@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -32,10 +33,12 @@ import {
   ArrowLeft,
   BookOpen,
   ChevronRight,
+  Copy,
   Edit3,
   Eye,
   EyeOff,
   FileText,
+  Image as ImageIcon,
   LayoutDashboard,
   Loader2,
   Lock,
@@ -44,21 +47,37 @@ import {
   Plus,
   Star,
   Trash2,
+  Upload,
+  User,
   Users,
+  X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Category, type Post, type ReadingRecommendation } from "../backend.d";
+import { ExternalBlob } from "../backend";
 import {
+  type AboutContent,
+  type BioSection,
+  Category,
+  type FileMetadata,
+  type Post,
+  type ReadingRecommendation,
+} from "../backend.d";
+import {
+  useAboutContent,
+  useAddMediaFile,
   useAddRecommendation,
   useAdminActiveQuote,
   useAdminRecommendations,
   useAllPosts,
   useAllSubscribers,
   useCreatePost,
+  useDeleteMediaFile,
   useDeletePost,
   useDeleteRecommendation,
+  useMediaFiles,
+  useSetAboutContent,
   useSetActiveQuote,
   useToggleDraft,
   useToggleFeatured,
@@ -204,7 +223,14 @@ function LoginScreen({ onLogin }: { onLogin: (pw: string) => boolean }) {
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-type AdminTab = "dashboard" | "articles" | "quotes" | "reading" | "subscribers";
+type AdminTab =
+  | "dashboard"
+  | "articles"
+  | "quotes"
+  | "reading"
+  | "about"
+  | "media"
+  | "subscribers";
 
 interface SidebarProps {
   activeTab: AdminTab;
@@ -241,6 +267,18 @@ const navItems: {
     label: "Reading List",
     icon: <BookOpen className="w-4 h-4" />,
     ocid: "admin.reading.tab",
+  },
+  {
+    id: "about",
+    label: "About Page",
+    icon: <User className="w-4 h-4" />,
+    ocid: "admin.about.tab",
+  },
+  {
+    id: "media",
+    label: "Media Library",
+    icon: <ImageIcon className="w-4 h-4" />,
+    ocid: "admin.media.tab",
   },
   {
     id: "subscribers",
@@ -428,6 +466,107 @@ function DashboardSection() {
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function formatFileSize(bytes: bigint): string {
+  const n = Number(bytes);
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function fileToUint8Array(file: File): Promise<Uint8Array<ArrayBuffer>> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) =>
+      resolve(new Uint8Array(e.target!.result as ArrayBuffer));
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ─── Post Image Upload ────────────────────────────────────────────────────────
+
+function PostImageUpload({
+  onUploadComplete,
+}: { onUploadComplete: (url: string) => void }) {
+  const [progress, setProgress] = useState<number | null>(null);
+  const addMediaFile = useAddMediaFile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    try {
+      setProgress(0);
+      const bytes = await fileToUint8Array(file);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+        setProgress(pct),
+      );
+      const metadata: FileMetadata = {
+        id: crypto.randomUUID(),
+        blob,
+        mimeType: file.type,
+        filename: file.name,
+        sizeBytes: BigInt(file.size),
+        uploadTimestamp: BigInt(Date.now()),
+      };
+      await addMediaFile.mutateAsync(metadata);
+      onUploadComplete(metadata.blob.getDirectURL());
+      toast.success("Image uploaded successfully.");
+    } catch {
+      toast.error("Failed to upload image.");
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          e.target.value = "";
+        }}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={progress !== null}
+        className="border-border/60 gap-2 text-sm"
+        data-ocid="admin.post.image_upload_button"
+      >
+        {progress !== null ? (
+          <>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
+          </>
+        ) : (
+          <>
+            <Upload className="w-3.5 h-3.5" /> Upload Image
+          </>
+        )}
+      </Button>
+      {progress !== null && (
+        <div className="space-y-1">
+          <Progress value={progress} className="h-1.5" />
+          <p className="text-xs text-muted-foreground">
+            {Math.round(progress)}%
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -701,20 +840,47 @@ function PostForm({
           </div>
         </div>
 
-        {/* Featured Image URL */}
-        <div className="space-y-1.5">
+        {/* Featured Image Upload */}
+        <div className="space-y-2">
           <Label className="text-sm font-medium">
-            Featured Image URL{" "}
+            Featured Image{" "}
             <span className="text-muted-foreground font-normal">
               (optional)
             </span>
           </Label>
-          <Input
-            value={featuredImage}
-            onChange={(e) => setFeaturedImage(e.target.value)}
-            placeholder="https://..."
-            className="bg-input border-border/60"
-          />
+
+          {/* Current Image Preview */}
+          {featuredImage && (
+            <div className="relative w-32 h-20 rounded overflow-hidden border border-border/60">
+              <img
+                src={featuredImage}
+                alt="Featured preview"
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => setFeaturedImage("")}
+                className="absolute top-1 right-1 bg-background/80 rounded-full p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Upload Button */}
+          <PostImageUpload onUploadComplete={(url) => setFeaturedImage(url)} />
+
+          {/* URL Input */}
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">Or paste image URL</p>
+            <Input
+              value={featuredImage}
+              onChange={(e) => setFeaturedImage(e.target.value)}
+              placeholder="https://..."
+              className="bg-input border-border/60"
+              data-ocid="admin.post.image_url_input"
+            />
+          </div>
         </div>
 
         {/* Meta Description */}
@@ -1451,6 +1617,625 @@ function SubscribersSection() {
   );
 }
 
+// ─── About Section ────────────────────────────────────────────────────────────
+
+const DEFAULT_BIO_SECTIONS: BioSection[] = [
+  { heading: "Forest Service & Career", body: "" },
+  { heading: "Academic Background", body: "" },
+  { heading: "Interest in Geopolitics & Strategy", body: "" },
+  { heading: "Personal Philosophy", body: "" },
+];
+
+function AboutSection() {
+  const { data: aboutData, isLoading } = useAboutContent();
+  const setAboutContent = useSetAboutContent();
+  const addMediaFile = useAddMediaFile();
+
+  const [portraitUrl, setPortraitUrl] = useState("");
+  const [bioSections, setBioSections] =
+    useState<BioSection[]>(DEFAULT_BIO_SECTIONS);
+  const [email, setEmail] = useState("");
+  const [linkedin, setLinkedin] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [portraitUploadProgress, setPortraitUploadProgress] = useState<
+    number | null
+  >(null);
+
+  const portraitInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (aboutData) {
+      setPortraitUrl(aboutData.portraitUrl ?? "");
+      setBioSections(
+        aboutData.bioSections.length > 0
+          ? aboutData.bioSections
+          : DEFAULT_BIO_SECTIONS,
+      );
+      setEmail(aboutData.email ?? "");
+      setLinkedin(aboutData.socialLinks?.linkedin ?? "");
+      setTwitter(aboutData.socialLinks?.twitter ?? "");
+      setInstagram(aboutData.socialLinks?.instagram ?? "");
+    }
+  }, [aboutData]);
+
+  const handlePortraitUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    try {
+      setPortraitUploadProgress(0);
+      const bytes = await fileToUint8Array(file);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+        setPortraitUploadProgress(pct),
+      );
+      const metadata: FileMetadata = {
+        id: crypto.randomUUID(),
+        blob,
+        mimeType: file.type,
+        filename: file.name,
+        sizeBytes: BigInt(file.size),
+        uploadTimestamp: BigInt(Date.now()),
+      };
+      await addMediaFile.mutateAsync(metadata);
+      setPortraitUrl(metadata.blob.getDirectURL());
+      toast.success("Portrait uploaded.");
+    } catch {
+      toast.error("Failed to upload portrait.");
+    } finally {
+      setPortraitUploadProgress(null);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const content: AboutContent = {
+      portraitUrl,
+      bioSections: bioSections.filter((s) => s.heading.trim()),
+      email,
+      socialLinks: { linkedin, twitter, instagram },
+    };
+    try {
+      await setAboutContent.mutateAsync(content);
+      toast.success("About page updated successfully.");
+    } catch {
+      toast.error("Failed to save about content.");
+    }
+  };
+
+  const updateSection = (
+    index: number,
+    field: keyof BioSection,
+    value: string,
+  ) => {
+    setBioSections((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)),
+    );
+  };
+
+  const removeSection = (index: number) => {
+    setBioSections((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addSection = () => {
+    setBioSections((prev) => [...prev, { heading: "", body: "" }]);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4" data-ocid="admin.about.loading_state">
+        {["s1", "s2", "s3", "s4"].map((k) => (
+          <div key={k} className="h-16 rounded bg-muted animate-pulse" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-foreground">
+          About Page
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Edit your portrait, bio, and contact details
+        </p>
+      </div>
+
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* Portrait */}
+        <Card className="bg-card border-border/40">
+          <CardHeader>
+            <CardTitle className="font-display text-lg">
+              Portrait Photo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {portraitUrl && (
+              <div className="relative w-28 h-36 rounded overflow-hidden border border-border/60">
+                <img
+                  src={portraitUrl}
+                  alt="Portrait preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <input
+              ref={portraitInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePortraitUpload(file);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => portraitInputRef.current?.click()}
+              disabled={portraitUploadProgress !== null}
+              className="border-border/60 gap-2"
+              data-ocid="admin.about.portrait_upload_button"
+            >
+              {portraitUploadProgress !== null ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-3.5 h-3.5" /> Upload New Portrait
+                </>
+              )}
+            </Button>
+            {portraitUploadProgress !== null && (
+              <div className="space-y-1 max-w-xs">
+                <Progress value={portraitUploadProgress} className="h-1.5" />
+                <p className="text-xs text-muted-foreground">
+                  {Math.round(portraitUploadProgress)}%
+                </p>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Or paste portrait URL
+              </Label>
+              <Input
+                value={portraitUrl}
+                onChange={(e) => setPortraitUrl(e.target.value)}
+                placeholder="https://..."
+                className="bg-input border-border/60 max-w-md"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bio Sections */}
+        <Card className="bg-card border-border/40">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="font-display text-lg">Bio Sections</CardTitle>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addSection}
+              className="border-border/60 gap-1.5"
+              data-ocid="admin.about.add_section_button"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Section
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {bioSections.map((section, index) => (
+              <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: sections are position-ordered
+                key={index}
+                className="space-y-2 p-4 border border-border/30 rounded bg-background/30 relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => removeSection(index)}
+                  className="absolute top-3 right-3 text-muted-foreground hover:text-destructive transition-colors"
+                  data-ocid={`admin.about.section.delete_button.${index + 1}`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <div className="space-y-1.5 pr-8">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Section Heading
+                  </Label>
+                  <Input
+                    value={section.heading}
+                    onChange={(e) =>
+                      updateSection(index, "heading", e.target.value)
+                    }
+                    placeholder="e.g. Forest Service & Career"
+                    className="bg-input border-border/60"
+                    data-ocid={`admin.about.section.heading_input.${index + 1}`}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Body Text
+                  </Label>
+                  <Textarea
+                    value={section.body}
+                    onChange={(e) =>
+                      updateSection(index, "body", e.target.value)
+                    }
+                    placeholder="Write the section content here..."
+                    rows={4}
+                    className="bg-input border-border/60 resize-y"
+                    data-ocid={`admin.about.section.textarea.${index + 1}`}
+                  />
+                </div>
+              </div>
+            ))}
+            {bioSections.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No sections yet. Click "Add Section" to start.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Contact & Social */}
+        <Card className="bg-card border-border/40">
+          <CardHeader>
+            <CardTitle className="font-display text-lg">
+              Contact & Social Links
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-sm font-medium">Contact Email</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="contact@vatsinthewild.in"
+                className="bg-input border-border/60 max-w-md"
+                data-ocid="admin.about.email_input"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">LinkedIn URL</Label>
+                <Input
+                  value={linkedin}
+                  onChange={(e) => setLinkedin(e.target.value)}
+                  placeholder="https://linkedin.com/in/..."
+                  className="bg-input border-border/60"
+                  data-ocid="admin.about.linkedin_input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Twitter / X URL</Label>
+                <Input
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="https://x.com/..."
+                  className="bg-input border-border/60"
+                  data-ocid="admin.about.twitter_input"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-medium">Instagram URL</Label>
+                <Input
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  placeholder="https://instagram.com/..."
+                  className="bg-input border-border/60"
+                  data-ocid="admin.about.instagram_input"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={setAboutContent.isPending}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2"
+            data-ocid="admin.about.save_button"
+          >
+            {setAboutContent.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+              </>
+            ) : (
+              "Save About Content"
+            )}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Media Library ────────────────────────────────────────────────────────────
+
+const MEDIA_ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+];
+
+function MediaSection() {
+  const { data: files, isLoading } = useMediaFiles();
+  const addMediaFile = useAddMediaFile();
+  const deleteMediaFile = useDeleteMediaFile();
+
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = useCallback(
+    async (file: File) => {
+      if (!MEDIA_ACCEPTED_TYPES.includes(file.type)) {
+        toast.error("Only images (JPEG, PNG, WebP, GIF) and PDFs are allowed.");
+        return;
+      }
+      try {
+        setUploadProgress(0);
+        const bytes = await fileToUint8Array(file);
+        const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+          setUploadProgress(pct),
+        );
+        const metadata: FileMetadata = {
+          id: crypto.randomUUID(),
+          blob,
+          mimeType: file.type,
+          filename: file.name,
+          sizeBytes: BigInt(file.size),
+          uploadTimestamp: BigInt(Date.now()),
+        };
+        await addMediaFile.mutateAsync(metadata);
+        toast.success(`${file.name} uploaded.`);
+      } catch {
+        toast.error("Upload failed. Please try again.");
+      } finally {
+        setUploadProgress(null);
+      }
+    },
+    [addMediaFile],
+  );
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleUpload(file);
+    },
+    [handleUpload],
+  );
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await deleteMediaFile.mutateAsync(id);
+      toast.success("File deleted.");
+    } catch {
+      toast.error("Failed to delete file.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleCopyUrl = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      toast.success("URL copied!");
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-foreground">
+          Media Library
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Upload and manage images and PDFs for use across your site
+        </p>
+      </div>
+
+      {/* Upload Zone */}
+      <Card className="bg-card border-border/40">
+        <CardContent className="p-6 space-y-4">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleUpload(file);
+              e.target.value = "";
+            }}
+          />
+          {/* Drop zone wrapper — pure drag-and-drop target, click handled by button inside */}
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded-lg p-10 text-center transition-all duration-200 ${
+              isDragging
+                ? "border-primary bg-primary/5 scale-[1.01]"
+                : "border-border/50 hover:border-primary/50 hover:bg-muted/20"
+            }`}
+            data-ocid="admin.media.dropzone"
+          >
+            <Upload className="w-8 h-8 text-muted-foreground/50 mx-auto mb-3" />
+            <p className="text-sm font-medium text-foreground">
+              Drop files here or click the button to upload
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Images (JPEG, PNG, WebP, GIF) and PDFs
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4 border-border/60 gap-2"
+              onClick={() => fileInputRef.current?.click()}
+              data-ocid="admin.media.upload_button"
+            >
+              <Upload className="w-3.5 h-3.5" /> Choose File
+            </Button>
+          </div>
+
+          {uploadProgress !== null && (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Uploading...</span>
+                <span>{Math.round(uploadProgress)}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-2" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Files Grid */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium text-muted-foreground">
+            {files?.length ?? 0} file{files?.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+            data-ocid="admin.media.loading_state"
+          >
+            {["m1", "m2", "m3", "m4", "m5", "m6"].map((k) => (
+              <div
+                key={k}
+                className="aspect-square rounded bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        ) : !files?.length ? (
+          <Card className="bg-card border-border/40">
+            <CardContent
+              className="py-16 text-center"
+              data-ocid="admin.media.empty_state"
+            >
+              <ImageIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground text-sm">
+                No files uploaded yet.
+              </p>
+              <p className="text-muted-foreground/60 text-xs mt-1">
+                Upload images and PDFs to use in your articles.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {files.map((file, index) => {
+              const isImage = file.mimeType.startsWith("image/");
+              const isPdf = file.mimeType === "application/pdf";
+              const url = file.blob.getDirectURL();
+              return (
+                <div
+                  key={file.id}
+                  className="group border border-border/40 rounded-lg overflow-hidden bg-card hover:border-primary/30 transition-all"
+                  data-ocid={`admin.media.item.${index + 1}`}
+                >
+                  {/* Thumbnail */}
+                  <div className="aspect-video bg-muted/30 flex items-center justify-center overflow-hidden">
+                    {isImage ? (
+                      <img
+                        src={url}
+                        alt={file.filename}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : isPdf ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <FileText className="w-10 h-10 text-muted-foreground/50" />
+                        <span className="text-xs text-muted-foreground">
+                          PDF
+                        </span>
+                      </div>
+                    ) : (
+                      <FileText className="w-10 h-10 text-muted-foreground/50" />
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-3 space-y-2">
+                    <div>
+                      <p
+                        className="text-xs font-medium text-foreground truncate"
+                        title={file.filename}
+                      >
+                        {file.filename}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] bg-muted/60 text-muted-foreground px-1.5 py-0"
+                        >
+                          {file.mimeType.split("/")[1]?.toUpperCase()}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatFileSize(file.sizeBytes)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyUrl(url)}
+                        className="flex-1 h-7 text-xs border-border/60 gap-1"
+                        data-ocid={`admin.media.copy_button.${index + 1}`}
+                      >
+                        <Copy className="w-3 h-3" /> Copy URL
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(file.id)}
+                        disabled={deletingId === file.id}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        data-ocid={`admin.media.delete_button.${index + 1}`}
+                      >
+                        {deletingId === file.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Admin Panel ──────────────────────────────────────────────────────────────
 
 function AdminPanel({ onLogout }: { onLogout: () => void }) {
@@ -1466,6 +2251,10 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         return <QuotesSection />;
       case "reading":
         return <ReadingSection />;
+      case "about":
+        return <AboutSection />;
+      case "media":
+        return <MediaSection />;
       case "subscribers":
         return <SubscribersSection />;
     }

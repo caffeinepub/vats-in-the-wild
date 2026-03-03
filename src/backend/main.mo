@@ -1,15 +1,22 @@
 import Map "mo:core/Map";
 import Set "mo:core/Set";
-import Text "mo:core/Text";
-import Iter "mo:core/Iter";
 import List "mo:core/List";
-import Order "mo:core/Order";
-import Array "mo:core/Array";
-import Bool "mo:core/Bool";
-import Int "mo:core/Int";
+import Text "mo:core/Text";
 import Runtime "mo:core/Runtime";
+import Array "mo:core/Array";
+import Iter "mo:core/Iter";
+import Order "mo:core/Order";
+import Int "mo:core/Int";
+import Bool "mo:core/Bool";
+import Migration "migration";
+import MixinStorage "blob-storage/Mixin";
+import Storage "blob-storage/Storage";
 
+// Enable data migration via migration module and with-clause
+(with migration = Migration.run)
 actor {
+  include MixinStorage();
+
   public type Category = {
     #international_relations;
     #forest_field_notes;
@@ -54,6 +61,33 @@ actor {
     addedAt : Int;
   };
 
+  public type BioSection = {
+    heading : Text;
+    body : Text;
+  };
+
+  public type SocialLinks = {
+    linkedin : Text;
+    twitter : Text;
+    instagram : Text;
+  };
+
+  public type AboutContent = {
+    portraitUrl : Text;
+    bioSections : [BioSection];
+    email : Text;
+    socialLinks : SocialLinks;
+  };
+
+  public type FileMetadata = {
+    id : Text;
+    blob : Storage.ExternalBlob;
+    filename : Text;
+    mimeType : Text;
+    sizeBytes : Nat;
+    uploadTimestamp : Int;
+  };
+
   module PostEntity {
     public func compareByPublishedAt(p1 : Post, p2 : Post) : Order.Order {
       Int.compare(p2.publishedAt, p1.publishedAt);
@@ -70,17 +104,17 @@ actor {
   var subscribers = Set.empty<Text>();
   var quotes = Map.empty<Text, Quote>();
   var recommendations = Map.empty<Text, ReadingRecommendation>();
+  var aboutContent : ?AboutContent = null;
+  var files = Map.empty<Text, FileMetadata>();
 
   func seedData() {
-    // Use a fixed timestamp to set relative values
     let timestamp : Int = 100000;
 
-    // Sample Posts
     let samplePosts = [
       {
         title = "Shaping Global Environmental Policy";
         slug = "shaping-global-environmental-policy";
-        excerpt = "Exploring India's role in international conservation efforts.";
+        excerpt = "Exploring India`s role in international conservation efforts.";
         body = "Detailed article on conferences and treaties...";
         category = #international_relations;
         subcategory = ?"Climate Policy";
@@ -88,7 +122,7 @@ actor {
         featuredImage = ?"https://placeholder.com/image1.jpg";
         readingTimeMinutes = 8;
         metaDescription = ?"How India influences global environmental policy";
-        publishedAt = timestamp - 1728000; // 20 days ago
+        publishedAt = timestamp - 1728000;
         isDraft = false;
         isFeatured = true;
       },
@@ -103,7 +137,7 @@ actor {
         featuredImage = ?"https://placeholder.com/image2.jpg";
         readingTimeMinutes = 10;
         metaDescription = ?"Exciting survival stories from the jungle";
-        publishedAt = timestamp - 864000; // 10 days ago
+        publishedAt = timestamp - 864000;
         isDraft = false;
         isFeatured = false;
       },
@@ -118,7 +152,7 @@ actor {
         featuredImage = ?"https://placeholder.com/image3.jpg";
         readingTimeMinutes = 7;
         metaDescription = ?"Life in remote forest areas";
-        publishedAt = timestamp - 604800; // 7 days ago
+        publishedAt = timestamp - 604800;
         isDraft = false;
         isFeatured = false;
       },
@@ -133,7 +167,7 @@ actor {
         featuredImage = ?"https://placeholder.com/image4.jpg";
         readingTimeMinutes = 6;
         metaDescription = ?"Introspection and spirituality in nature";
-        publishedAt = timestamp - 432000; // 5 days ago
+        publishedAt = timestamp - 432000;
         isDraft = false;
         isFeatured = true;
       },
@@ -148,7 +182,7 @@ actor {
         featuredImage = ?"https://placeholder.com/image5.jpg";
         readingTimeMinutes = 9;
         metaDescription = ?"Personal and professional growth essays";
-        publishedAt = timestamp - 259200; // 3 days ago
+        publishedAt = timestamp - 259200;
         isDraft = false;
         isFeatured = false;
       },
@@ -158,7 +192,6 @@ actor {
       posts.add(post.slug, post);
     };
 
-    // Sample Quote
     let sampleQuote : Quote = {
       text = "The forest is not just a resource, it is life itself.";
       author = "Shubham Vats";
@@ -166,7 +199,6 @@ actor {
     };
     quotes.add("active", sampleQuote);
 
-    // Sample Reading Recommendations
     let sampleRecommendations = [
       {
         title = "Conservation Chronicles";
@@ -197,6 +229,27 @@ actor {
     for (recommendation in sampleRecommendations.values()) {
       recommendations.add(recommendation.title, recommendation);
     };
+
+    let initialAboutContent : AboutContent = {
+      portraitUrl = "https://placeholder.com/portrait.jpg";
+      bioSections = [
+        {
+          heading = "Professional Background";
+          body = "Conservator of Forests with 25 years of experience...";
+        },
+        {
+          heading = "Philosophy";
+          body = "Believes in holistic conservation and sustainable living...";
+        },
+      ];
+      email = "shubham.vats@example.com";
+      socialLinks = {
+        linkedin = "https://linkedin.com/in/shubhamvats";
+        twitter = "https://twitter.com/shubhamvats";
+        instagram = "https://instagram.com/shubhamvats";
+      };
+    };
+    aboutContent := ?initialAboutContent;
   };
 
   public shared ({ caller }) func initialize() : async () {
@@ -204,7 +257,6 @@ actor {
     seedData();
   };
 
-  // Post Operations
   public shared ({ caller }) func createPost(post : Post) : async () {
     if (posts.get(post.slug) != null) { Runtime.trap("Post with this slug already exists") };
     posts.add(post.slug, post);
@@ -310,7 +362,6 @@ actor {
     };
   };
 
-  // Newsletter Operations
   public shared ({ caller }) func subscribeNewsletter(email : Text) : async () {
     if (subscribers.contains(email)) { Runtime.trap("Already subscribed") };
     subscribers.add(email);
@@ -320,7 +371,6 @@ actor {
     subscribers.toArray();
   };
 
-  // Quote Operations
   public shared ({ caller }) func setActiveQuote(text : Text, author : Text) : async () {
     let newQuote : Quote = {
       text;
@@ -354,7 +404,6 @@ actor {
     quotes.values().toArray();
   };
 
-  // Reading Recommendation Operations
   public shared ({ caller }) func addRecommendation(recommendation : ReadingRecommendation) : async () {
     if (recommendations.containsKey(recommendation.title)) { Runtime.trap("Recommendation already exists") };
     recommendations.add(recommendation.title, recommendation);
@@ -381,5 +430,58 @@ actor {
 
   public query ({ caller }) func isInitialized() : async Bool {
     posts.size() > 0;
+  };
+
+  // *** New Features ***
+
+  // About Content Management
+  public shared ({ caller }) func setAboutContent(newContent : AboutContent) : async () {
+    aboutContent := ?newContent;
+  };
+
+  public query ({ caller }) func getAboutContent() : async ?AboutContent {
+    aboutContent;
+  };
+
+  // Media File Registry
+  public shared ({ caller }) func addFileMetadata(metadata : FileMetadata) : async () {
+    if (files.containsKey(metadata.id)) {
+      Runtime.trap("File with this id already exists");
+    };
+    files.add(metadata.id, metadata);
+  };
+
+  public shared ({ caller }) func deleteFileMetadata(id : Text) : async () {
+    if (not files.containsKey(id)) {
+      Runtime.trap("File not found");
+    };
+    files.remove(id);
+  };
+
+  public query ({ caller }) func listAllFiles() : async [FileMetadata] {
+    files.values().toArray();
+  };
+
+  public query ({ caller }) func getFileById(id : Text) : async ?FileMetadata {
+    files.get(id);
+  };
+
+  public shared ({ caller }) func updateFileMetadata(id : Text, updatedMetadata : FileMetadata) : async () {
+    if (not files.containsKey(id)) {
+      Runtime.trap("File not found");
+    };
+    files.add(id, updatedMetadata);
+  };
+
+  public query ({ caller }) func listFilesByType(mimeType : Text) : async [FileMetadata] {
+    let iter = files.values().filter(func(file) { file.mimeType == mimeType });
+    iter.toArray();
+  };
+
+  public shared ({ caller }) func replaceAllFiles(newFiles : [FileMetadata]) : async () {
+    files.clear();
+    for (file in newFiles.values()) {
+      files.add(file.id, file);
+    };
   };
 };
