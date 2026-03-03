@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* LIGHT MODE — Warm off-white, editorial cream */
+  :root {
+    --radius: 0.25rem;
+
+    --background: 0.97 0.008 85;
+    --foreground: 0.18 0.015 60;
+    --card: 0.94 0.012 80;
+    --card-foreground: 0.18 0.015 60;
+    --popover: 0.96 0.01 82;
+    --popover-foreground: 0.18 0.015 60;
+    --primary: 0.38 0.09 148;
+    --primary-foreground: 0.97 0.008 85;
+    --secondary: 0.88 0.02 75;
+    --secondary-foreground: 0.25 0.015 65;
+    --muted: 0.90 0.015 78;
+    --muted-foreground: 0.50 0.02 70;
+    --accent: 0.52 0.07 55;
+    --accent-foreground: 0.97 0.008 85;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+    --border: 0.82 0.025 75;
+    --input: 0.85 0.02 78;
+    --ring: 0.38 0.09 148;
+    --chart-1: 0.646 0.222 41.116;
+    --chart-2: 0.6 0.118 184.704;
+    --chart-3: 0.398 0.07 227.392;
+    --chart-4: 0.828 0.189 84.429;
+    --chart-5: 0.769 0.188 70.08;
+    --sidebar: 0.94 0.012 80;
+    --sidebar-foreground: 0.18 0.015 60;
+    --sidebar-primary: 0.38 0.09 148;
+    --sidebar-primary-foreground: 0.97 0.008 85;
+    --sidebar-accent: 0.88 0.02 75;
+    --sidebar-accent-foreground: 0.25 0.015 65;
+    --sidebar-border: 0.82 0.025 75;
+    --sidebar-ring: 0.38 0.09 148;
+  }
+
+  /* DARK MODE — Deep charcoal forest */
+  .dark {
+    --background: 0.13 0.01 70;
+    --foreground: 0.93 0.01 80;
+    --card: 0.17 0.012 68;
+    --card-foreground: 0.93 0.01 80;
+    --popover: 0.17 0.012 68;
+    --popover-foreground: 0.93 0.01 80;
+    --primary: 0.50 0.10 150;
+    --primary-foreground: 0.10 0.01 70;
+    --secondary: 0.22 0.015 68;
+    --secondary-foreground: 0.88 0.01 78;
+    --muted: 0.20 0.012 70;
+    --muted-foreground: 0.58 0.018 72;
+    --accent: 0.55 0.065 50;
+    --accent-foreground: 0.93 0.01 80;
+    --destructive: 0.704 0.191 22.216;
+    --destructive-foreground: 0.93 0.01 80;
+    --border: 0.25 0.015 70;
+    --input: 0.22 0.012 70;
+    --ring: 0.50 0.10 150;
+    --chart-1: 0.488 0.243 264.376;
+    --chart-2: 0.696 0.17 162.48;
+    --chart-3: 0.769 0.188 70.08;
+    --chart-4: 0.627 0.265 303.9;
+    --chart-5: 0.645 0.246 16.439;
+    --sidebar: 0.17 0.012 68;
+    --sidebar-foreground: 0.93 0.01 80;
+    --sidebar-primary: 0.50 0.10 150;
+    --sidebar-primary-foreground: 0.10 0.01 70;
+    --sidebar-accent: 0.22 0.015 68;
+    --sidebar-accent-foreground: 0.88 0.01 78;
+    --sidebar-border: 0.25 0.015 70;
+    --sidebar-ring: 0.50 0.10 150;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Prose styling for article body */
+  .prose-forest p {
+    line-height: 1.9;
+    margin-bottom: 1.5rem;
+    font-size: 1.05rem;
+  }
+
+  .prose-forest h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .prose-forest h3 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .prose-forest blockquote {
+    border-left: 3px solid oklch(var(--primary));
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    font-style: italic;
+  }
+}
