@@ -17,8 +17,8 @@ export default {
     extend: {
       fontFamily: {
         display: ["'Playfair Display'", "Georgia", "serif"],
-        body: ["'Inter'", "system-ui", "sans-serif"],
-        sans: ["'Inter'", "system-ui", "sans-serif"],
+        body: ["system-ui", "sans-serif"],
+        sans: ["system-ui", "sans-serif"],
         serif: ["'Playfair Display'", "Georgia", "serif"],
       },
       colors: {
@@ -72,6 +72,8 @@ export default {
           border: "oklch(var(--sidebar-border))",
           ring: "oklch(var(--sidebar-ring))",
         },
+        "admin-bg": "oklch(var(--admin-bg))",
+        "admin-sidebar": "oklch(var(--admin-sidebar))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -5,12 +5,14 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
 import { useActor } from "./hooks/useActor";
 import AboutPage from "./pages/AboutPage";
+import AdminPage from "./pages/AdminPage";
 import ArticlePage from "./pages/ArticlePage";
 import BeyondCutoffPage from "./pages/BeyondCutoffPage";
 import ForestFieldNotesPage from "./pages/ForestFieldNotesPage";
@@ -45,6 +47,18 @@ function BackendInit() {
 }
 
 function RootLayout() {
+  const routerState = useRouterState();
+  const isAdmin = routerState.location.pathname.startsWith("/admin");
+
+  if (isAdmin) {
+    return (
+      <>
+        <BackendInit />
+        <Outlet />
+      </>
+    );
+  }
+
   return (
     <>
       <BackendInit />
@@ -115,6 +129,12 @@ const articleRoute = createRoute({
   component: ArticlePage,
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   irRoute,
@@ -125,6 +145,7 @@ const routeTree = rootRoute.addChildren([
   aboutRoute,
   readingRoute,
   articleRoute,
+  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });
