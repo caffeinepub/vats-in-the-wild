@@ -44,6 +44,7 @@ import {
   Lock,
   LogOut,
   MessageSquareQuote,
+  Palette,
   Plus,
   Star,
   Trash2,
@@ -83,6 +84,7 @@ import {
   useToggleFeatured,
   useUpdatePost,
 } from "../hooks/useAdminQueries";
+import AdminCustomizerSection from "./AdminCustomizerSection";
 
 // ─── Auth Gate ────────────────────────────────────────────────────────────────
 
@@ -225,6 +227,7 @@ function LoginScreen({ onLogin }: { onLogin: (pw: string) => boolean }) {
 
 type AdminTab =
   | "dashboard"
+  | "customizer"
   | "articles"
   | "quotes"
   | "reading"
@@ -249,6 +252,12 @@ const navItems: {
     label: "Dashboard",
     icon: <LayoutDashboard className="w-4 h-4" />,
     ocid: "admin.dashboard.tab",
+  },
+  {
+    id: "customizer",
+    label: "Customizer",
+    icon: <Palette className="w-4 h-4" />,
+    ocid: "admin.customizer.tab",
   },
   {
     id: "articles",
@@ -2245,6 +2254,8 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
     switch (activeTab) {
       case "dashboard":
         return <DashboardSection />;
+      case "customizer":
+        return <AdminCustomizerSection />;
       case "articles":
         return <ArticlesSection />;
       case "quotes":

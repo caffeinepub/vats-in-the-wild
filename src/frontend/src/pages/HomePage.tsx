@@ -8,47 +8,28 @@ import NewsletterForm from "../components/NewsletterForm";
 import PostCard from "../components/PostCard";
 import QuoteBlock from "../components/QuoteBlock";
 import { useActiveQuote, useLatestPosts } from "../hooks/useQueries";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
-const SECTION_CARDS = [
+const SECTION_PATHS = [
   {
-    title: "International Relations",
-    description:
-      "Analytical essays on geopolitics, India's foreign policy, and global power shifts.",
     image: "/assets/generated/section-international-relations.dim_800x500.jpg",
     to: "/international-relations",
-    label: "World Affairs",
   },
   {
-    title: "Forest & Field Notes",
-    description:
-      "Field experiences, wildlife insights, conservation challenges, and policy reflections.",
     image: "/assets/generated/section-forest-notes.dim_800x500.jpg",
     to: "/forest-field-notes",
-    label: "Conservation",
   },
   {
-    title: "Beyond Cutoff",
-    description:
-      "High-quality insights for civil services aspirants: strategy, mindset, and discipline.",
     image: "/assets/generated/section-upsc.dim_800x500.jpg",
     to: "/beyond-cutoff",
-    label: "UPSC Strategy",
   },
   {
-    title: "The Wild Within",
-    description:
-      "Travel, trekking, fitness, photography, and reflections on the human experience.",
     image: "/assets/generated/section-wild-within.dim_800x500.jpg",
     to: "/wild-within",
-    label: "Explorations",
   },
   {
-    title: "Personal Essays",
-    description:
-      "Long-form reflections on leadership, public service, growth, and solitude.",
     image: "/assets/generated/section-personal-essays.dim_800x500.jpg",
     to: "/personal-essays",
-    label: "Reflections",
   },
 ];
 
@@ -128,6 +109,41 @@ export default function HomePage() {
   const { data: activeQuote } = useActiveQuote();
   const containerRef = useScrollFadeIn();
   const [heroVisible, setHeroVisible] = useState(false);
+  const settings = useSiteSettings();
+
+  // Build section cards from settings
+  const sectionCards = [
+    {
+      title: settings.section1Title,
+      description: settings.section1Description,
+      label: settings.section1Label,
+      ...SECTION_PATHS[0],
+    },
+    {
+      title: settings.section2Title,
+      description: settings.section2Description,
+      label: settings.section2Label,
+      ...SECTION_PATHS[1],
+    },
+    {
+      title: settings.section3Title,
+      description: settings.section3Description,
+      label: settings.section3Label,
+      ...SECTION_PATHS[2],
+    },
+    {
+      title: settings.section4Title,
+      description: settings.section4Description,
+      label: settings.section4Label,
+      ...SECTION_PATHS[3],
+    },
+    {
+      title: settings.section5Title,
+      description: settings.section5Description,
+      label: settings.section5Label,
+      ...SECTION_PATHS[4],
+    },
+  ];
 
   useEffect(() => {
     document.title =
@@ -162,7 +178,12 @@ export default function HomePage() {
           }}
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+        <div
+          className="absolute inset-0 bg-gradient-to-b"
+          style={{
+            background: `linear-gradient(to bottom, rgba(0,0,0,${settings.heroOverlayOpacity}) 0%, rgba(0,0,0,${Math.max(0, Number.parseFloat(settings.heroOverlayOpacity) - 0.2).toFixed(2)}) 50%, rgba(0,0,0,${settings.heroOverlayOpacity}) 100%)`,
+          }}
+        />
 
         {/* Hero content */}
         <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto">
@@ -172,7 +193,7 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <p className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/60 mb-6">
-              Notes from the Frontier
+              {settings.heroEyebrow}
             </p>
           </motion.div>
 
@@ -182,7 +203,7 @@ export default function HomePage() {
             transition={{ duration: 0.9, delay: 0.4 }}
             className="font-display text-5xl sm:text-7xl lg:text-8xl font-bold text-white mb-6 leading-none tracking-tight"
           >
-            Vats in the Wild
+            {settings.heroTitle}
           </motion.h1>
 
           <motion.p
@@ -191,7 +212,7 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="font-display text-lg sm:text-xl text-white/70 italic mb-10 max-w-2xl mx-auto"
           >
-            From Forest Lines to Fault Lines.
+            {settings.heroTagline}
           </motion.p>
 
           <motion.div
@@ -206,7 +227,7 @@ export default function HomePage() {
                 data-ocid="hero.read_journal_button"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold tracking-wide px-8"
               >
-                Read the Journal
+                {settings.heroCtaPrimary}
               </Button>
             </Link>
             <Button
@@ -220,7 +241,7 @@ export default function HomePage() {
               }}
               className="border-white/40 text-white hover:bg-white/10 hover:text-white hover:border-white/60 font-semibold tracking-wide px-8"
             >
-              Explore Sections
+              {settings.heroCtaSecondary}
             </Button>
           </motion.div>
         </div>
@@ -244,8 +265,11 @@ export default function HomePage() {
               <div className="relative max-w-sm mx-auto lg:mx-0">
                 <div className="aspect-[4/5] overflow-hidden rounded-sm">
                   <img
-                    src="/assets/generated/portrait-placeholder.dim_600x750.jpg"
-                    alt="Shubham Vats"
+                    src={
+                      settings.aboutPortraitUrl ||
+                      "/assets/generated/portrait-placeholder.dim_600x750.jpg"
+                    }
+                    alt={settings.aboutPreviewName}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -261,21 +285,17 @@ export default function HomePage() {
                   About
                 </p>
                 <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-2 leading-tight">
-                  Shubham Vats
+                  {settings.aboutPreviewName}
                 </h2>
                 <p className="text-sm font-medium tracking-widest uppercase text-muted-foreground mb-6">
-                  Indian Forest Service Officer
+                  {settings.aboutPreviewSubtitle}
                 </p>
               </div>
               <p className="text-base text-muted-foreground leading-relaxed">
-                Indian Forest Service Officer. Observer of power, policy, and
-                wilderness. Writing at the intersection of ecology, geopolitics,
-                and personal evolution.
+                {settings.aboutPreviewText1}
               </p>
               <p className="text-base text-muted-foreground leading-relaxed">
-                From the forest floor to the diplomatic frontier — this is a
-                space for sustained thought, field-tested insight, and the kind
-                of writing that takes time to arrive at.
+                {settings.aboutPreviewText2}
               </p>
               <Link to="/about" data-ocid="about_preview.read_bio_link">
                 <Button
@@ -306,7 +326,7 @@ export default function HomePage() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             data-ocid="sections.list"
           >
-            {SECTION_CARDS.map((section, i) => (
+            {sectionCards.map((section, i) => (
               <Link
                 key={section.to}
                 to={section.to}

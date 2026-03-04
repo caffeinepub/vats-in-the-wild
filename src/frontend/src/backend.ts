@@ -95,6 +95,57 @@ export interface AboutContent {
     email: string;
     portraitUrl: string;
 }
+export interface SiteSettings {
+    headingFont: string;
+    section2Description: string;
+    footerTagline: string;
+    section1Label: string;
+    borderRadius: string;
+    section2Title: string;
+    footerEmail: string;
+    heroCtaSecondary: string;
+    containerMaxWidth: string;
+    colorCard: string;
+    colorBorder: string;
+    aboutPortraitUrl: string;
+    aboutPreviewText1: string;
+    aboutPreviewText2: string;
+    footerInstagram: string;
+    colorMuted: string;
+    section4Label: string;
+    aboutPreviewName: string;
+    footerQuoteAuthor: string;
+    section5Title: string;
+    baseFontSize: string;
+    section3Description: string;
+    sectionPadding: string;
+    colorForeground: string;
+    footerLinkedin: string;
+    footerDescription: string;
+    section2Label: string;
+    aboutPreviewSubtitle: string;
+    section3Title: string;
+    colorBackground: string;
+    siteName: string;
+    section4Description: string;
+    siteSubtitle: string;
+    section5Label: string;
+    section1Title: string;
+    heroCtaPrimary: string;
+    colorPrimary: string;
+    section1Description: string;
+    bodyFont: string;
+    footerCopyright: string;
+    section5Description: string;
+    heroOverlayOpacity: string;
+    heroTitle: string;
+    section3Label: string;
+    section4Title: string;
+    footerQuoteText: string;
+    heroEyebrow: string;
+    heroTagline: string;
+    footerTwitter: string;
+}
 export interface FileMetadata {
     id: string;
     blob: ExternalBlob;
@@ -106,6 +157,9 @@ export interface FileMetadata {
 export interface BioSection {
     body: string;
     heading: string;
+}
+export interface _CaffeineStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
 }
 export interface Post {
     metaDescription?: string;
@@ -121,9 +175,6 @@ export interface Post {
     isFeatured: boolean;
     excerpt: string;
     category: Category;
-}
-export interface _CaffeineStorageRefillInformation {
-    proposed_top_up_amount?: bigint;
 }
 export interface SocialLinks {
     linkedin: string;
@@ -178,6 +229,7 @@ export interface backendInterface {
     getFileById(id: string): Promise<FileMetadata | null>;
     getLatestPosts(limit: bigint): Promise<Array<Post>>;
     getPostBySlug(slug: string): Promise<Post | null>;
+    getSiteSettings(): Promise<SiteSettings>;
     initialize(): Promise<void>;
     isInitialized(): Promise<boolean>;
     listAllFiles(): Promise<Array<FileMetadata>>;
@@ -192,6 +244,7 @@ export interface backendInterface {
     replaceAllFiles(newFiles: Array<FileMetadata>): Promise<void>;
     setAboutContent(newContent: AboutContent): Promise<void>;
     setActiveQuote(text: string, author: string): Promise<void>;
+    setSiteSettings(settings: SiteSettings): Promise<void>;
     subscribeNewsletter(email: string): Promise<void>;
     toggleDraft(slug: string): Promise<void>;
     toggleFeatured(slug: string): Promise<void>;
@@ -468,6 +521,20 @@ export class Backend implements backendInterface {
             return from_candid_opt_n29(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getSiteSettings(): Promise<SiteSettings> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSiteSettings();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSiteSettings();
+            return result;
+        }
+    }
     async initialize(): Promise<void> {
         if (this.processError) {
             try {
@@ -661,6 +728,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.setActiveQuote(arg0, arg1);
+            return result;
+        }
+    }
+    async setSiteSettings(arg0: SiteSettings): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setSiteSettings(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setSiteSettings(arg0);
             return result;
         }
     }

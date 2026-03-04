@@ -8,9 +8,11 @@ import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Bool "mo:core/Bool";
-import Migration "migration";
+import Nat "mo:core/Nat";
+
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+import Migration "migration";
 
 // Enable data migration via migration module and with-clause
 (with migration = Migration.run)
@@ -88,6 +90,58 @@ actor {
     uploadTimestamp : Int;
   };
 
+  public type SiteSettings = {
+    siteName : Text;
+    siteSubtitle : Text;
+    heroTitle : Text;
+    heroTagline : Text;
+    heroEyebrow : Text;
+    heroCtaPrimary : Text;
+    heroCtaSecondary : Text;
+    heroOverlayOpacity : Text;
+    aboutPreviewText1 : Text;
+    aboutPreviewText2 : Text;
+    aboutPreviewName : Text;
+    aboutPreviewSubtitle : Text;
+    aboutPortraitUrl : Text;
+    footerTagline : Text;
+    footerDescription : Text;
+    footerEmail : Text;
+    footerLinkedin : Text;
+    footerTwitter : Text;
+    footerInstagram : Text;
+    footerQuoteText : Text;
+    footerQuoteAuthor : Text;
+    footerCopyright : Text;
+    colorBackground : Text;
+    colorForeground : Text;
+    colorPrimary : Text;
+    colorCard : Text;
+    colorMuted : Text;
+    colorBorder : Text;
+    headingFont : Text;
+    bodyFont : Text;
+    baseFontSize : Text;
+    containerMaxWidth : Text;
+    sectionPadding : Text;
+    borderRadius : Text;
+    section1Title : Text;
+    section1Description : Text;
+    section1Label : Text;
+    section2Title : Text;
+    section2Description : Text;
+    section2Label : Text;
+    section3Title : Text;
+    section3Description : Text;
+    section3Label : Text;
+    section4Title : Text;
+    section4Description : Text;
+    section4Label : Text;
+    section5Title : Text;
+    section5Description : Text;
+    section5Label : Text;
+  };
+
   module PostEntity {
     public func compareByPublishedAt(p1 : Post, p2 : Post) : Order.Order {
       Int.compare(p2.publishedAt, p1.publishedAt);
@@ -106,6 +160,7 @@ actor {
   var recommendations = Map.empty<Text, ReadingRecommendation>();
   var aboutContent : ?AboutContent = null;
   var files = Map.empty<Text, FileMetadata>();
+  var siteSettings : ?SiteSettings = null;
 
   func seedData() {
     let timestamp : Int = 100000;
@@ -483,5 +538,71 @@ actor {
     for (file in newFiles.values()) {
       files.add(file.id, file);
     };
+  };
+
+  // Site Settings Management
+  public query ({ caller }) func getSiteSettings() : async SiteSettings {
+    switch (siteSettings) {
+      case (?settings) {
+        settings;
+      };
+      case (null) {
+        {
+          siteName = "Vats in the Wild";
+          siteSubtitle = "Where Forest Meets Statecraft.";
+          heroTitle = "Vats in the Wild";
+          heroTagline = "From Forest Lines to Fault Lines.";
+          heroEyebrow = "Notes from the Frontier";
+          heroCtaPrimary = "Read the Journal";
+          heroCtaSecondary = "Explore Sections";
+          heroOverlayOpacity = "0.5";
+          aboutPreviewText1 = "Indian Forest Service Officer. Observer of power, policy, and wilderness.";
+          aboutPreviewText2 = "From the forest floor to the diplomatic frontier.";
+          aboutPreviewName = "Shubham Vats";
+          aboutPreviewSubtitle = "Indian Forest Service Officer";
+          aboutPortraitUrl = "";
+          footerTagline = "Where Forest Meets Statecraft.";
+          footerDescription = "An Indian Forest Service Officer`s platform for writing on ecology, geopolitics, and personal evolution.";
+          footerEmail = "contact@vatsinthewild.in";
+          footerLinkedin = "https://linkedin.com";
+          footerTwitter = "https://x.com";
+          footerInstagram = "https://instagram.com";
+          footerQuoteText = "In every walk with nature, one receives far more than he seeks.";
+          footerQuoteAuthor = "John Muir";
+          footerCopyright = "Vats in the Wild. All rights reserved.";
+          colorBackground = "0.13 0.01 70";
+          colorForeground = "0.93 0.01 80";
+          colorPrimary = "0.50 0.10 150";
+          colorCard = "0.17 0.012 68";
+          colorMuted = "0.20 0.012 70";
+          colorBorder = "0.25 0.015 70";
+          headingFont = "Playfair Display";
+          bodyFont = "system-ui";
+          baseFontSize = "16";
+          containerMaxWidth = "1280";
+          sectionPadding = "normal";
+          borderRadius = "0.25";
+          section1Title = "International Relations";
+          section1Description = "Analytical essays on geopolitics, India`s foreign policy, and global power shifts.";
+          section1Label = "World Affairs";
+          section2Title = "Forest & Field Notes";
+          section2Description = "Field experiences, wildlife insights, conservation challenges, and policy reflections.";
+          section2Label = "Conservation";
+          section3Title = "Beyond Cutoff";
+          section3Description = "High-quality insights for civil services aspirants: strategy, mindset, and discipline.";
+          section3Label = "UPSC Strategy";
+          section4Title = "The Wild Within";
+          section4Description = "Travel, trekking, fitness, photography, and reflections on the human experience.";
+          section4Label = "Explorations";
+          section5Title = "Personal Essays";
+          section5Description = "Long-form reflections on leadership, public service, growth, and solitude.";
+          section5Label = "Reflections";
+        };
+      };
+    };
+  };
+
+  public shared ({ caller }) func setSiteSettings(settings : SiteSettings) : async () {
+    siteSettings := ?settings;
   };
 };

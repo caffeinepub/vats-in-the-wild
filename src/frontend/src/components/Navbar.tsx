@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 import { useTheme } from "../hooks/useTheme";
 
 const navLinks = [
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const routerState = useRouterState();
   const isHome = routerState.location.pathname === "/";
+  const settings = useSiteSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,14 +53,14 @@ export default function Navbar() {
                 isTransparent ? "text-white" : "text-foreground"
               }`}
             >
-              Vats in the Wild
+              {settings.siteName}
             </span>
             <span
               className={`font-body text-xs tracking-widest uppercase transition-colors ${
                 isTransparent ? "text-white/60" : "text-muted-foreground"
               }`}
             >
-              Where Forest Meets Statecraft.
+              {settings.siteSubtitle}
             </span>
           </Link>
 

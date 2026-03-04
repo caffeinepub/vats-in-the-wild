@@ -1,52 +1,46 @@
 # Vats in the Wild
 
 ## Current State
-
-- Full-stack personal website with Motoko backend and React frontend
-- Admin panel at `/admin` with password `vatswild2024`
-- Admin panel manages: articles (CRUD), quotes, reading list, subscribers
-- About page (`AboutPage.tsx`) has hardcoded portrait image, bio text, values, and contact info
-- Articles support a `featuredImage` field that only accepts a URL string (no upload)
-- No file upload capability anywhere in the app
-- No blob storage component selected
+- Full personal website with 6 section pages (International Relations, Forest & Field Notes, Beyond Cutoff, Wild Within, Personal Essays, About)
+- Admin panel at `/admin` with: Articles CRUD, Quotes, Reading List, About Page editor, Media Library, Subscribers
+- Backend stores: posts, quotes, subscribers, recommendations, aboutContent, files
+- Design uses OKLCH color tokens, Playfair Display serif font, dark forest theme
+- CSS custom properties define all colors in `index.css` (light + dark mode)
+- Tailwind config extends with font-display, font-body classes
 
 ## Requested Changes (Diff)
 
 ### Add
-- **About Section Editor in Admin**: A new "About" tab in the admin sidebar where admin can edit:
-  - Portrait photo (upload an image directly, stored via blob-storage)
-  - Bio paragraphs (Forest Service & Career, Academic Background, Geopolitics & Strategy, Personal Philosophy) — editable rich text areas
-  - Contact email
-  - Social links (LinkedIn, Twitter/X, Instagram)
-- **Media Library in Admin**: A new "Media" tab in the admin sidebar where admin can:
-  - Upload images (JPG, PNG, WebP, GIF) and PDFs
-  - See a grid/list of all uploaded files with thumbnail preview, filename, type, size
-  - Copy the file URL to clipboard
-  - Delete uploaded files
-- **Image/PDF Upload in Article Form**: Replace the plain "Featured Image URL" text input with an upload button that allows picking an image file; also add an "Attachments" section in the article form to upload PDFs or additional images that get embedded as links in content
-- **File upload in Section pages**: Public section pages (Forest & Field Notes, Wild Within, etc.) display uploaded images and PDFs linked from articles
+- New "Site Customizer" tab in the admin sidebar — comprehensive visual editor for every aspect of the public site
+- **Typography Section**: heading font (Playfair Display, Lora, EB Garamond, Cormorant Garamond, Merriweather), body font (system-ui, Inter, Source Serif Pro, Nunito), base font size slider, heading weight selector, line height slider, letter spacing
+- **Color Palette Section**: live color pickers (using OKLCH) for background, foreground, primary (accent), card, muted, border. Preset palette swatches: "Forest Dark" (default), "Midnight Ink", "Warm Parchment", "Stone Grey", "Moss Green"
+- **Layout Section**: container max-width slider, section padding (compact/normal/spacious), border radius (sharp/subtle/rounded), navbar height toggle
+- **Hero Section Editor**: edit hero title ("Vats in the Wild"), subtitle tagline ("From Forest Lines to Fault Lines."), eyebrow text ("Notes from the Frontier"), hero background overlay opacity slider, CTA button labels
+- **Sections Grid Editor**: edit title, description, label for each of the 5 section cards shown on homepage
+- **About Preview Editor**: edit the short bio text shown on the homepage about preview, portrait URL, name display, subtitle
+- **Footer Editor**: edit footer tagline text, contact email, social links (LinkedIn, Twitter, Instagram), copyright text, footer quote text and attribution
+- **Navbar Editor**: edit site title, site subtitle shown in navbar
+- All settings stored in backend as a JSON SiteSettings object
+- On the public site, all pages/components read from a `useSiteSettings()` hook that loads settings from backend (with localStorage cache + fallback defaults)
+- Live preview panel in admin showing approximate rendering of changes
 
 ### Modify
-- Backend (`main.mo`): Add `AboutContent` type and storage; add `getAboutContent` query and `setAboutContent` update; add `MediaFile` type with id, url, filename, mimeType, size, uploadedAt fields; add `addMediaFile`, `deleteMediaFile`, `listMediaFiles` operations
-- `backend.d.ts`: Add corresponding TypeScript types and interface methods
-- `AdminPage.tsx`: Add "About" and "Media" tabs to sidebar nav; add `AboutSection` component; add `MediaSection` component; update `PostForm` to include image upload button for featuredImage field and attachments list
-- `AboutPage.tsx`: Fetch `aboutContent` from backend and render dynamically; fall back to hardcoded defaults if not set
-- `useAdminQueries.ts`: Add hooks for about content and media files
-- Sidebar type: extend `AdminTab` union to include `"about"` and `"media"`
+- Backend: add `SiteSettings` type and `getSiteSettings` / `setSiteSettings` methods
+- `Navbar.tsx`: consume site title and subtitle from `useSiteSettings()`
+- `Footer.tsx`: consume footer settings from `useSiteSettings()`
+- `HomePage.tsx`: consume hero settings, about preview text, sections grid data, from `useSiteSettings()`
+- `index.css`: CSS variables remain as baseline defaults; runtime overrides applied via JS to `document.documentElement.style.setProperty`
+- `AdminPage.tsx`: add "Customizer" tab to sidebar, load/save SiteSettings
 
 ### Remove
 - Nothing removed
 
 ## Implementation Plan
-
-1. Select `blob-storage` component
-2. Generate updated Motoko backend with `AboutContent` and `MediaFile` types and their CRUD operations
-3. Update `backend.d.ts` with new types and interface methods
-4. Add hooks in `useAdminQueries.ts`: `useAboutContent`, `useSetAboutContent`, `useMediaFiles`, `useAddMediaFile`, `useDeleteMediaFile`
-5. Update `AdminPage.tsx`:
-   - Add `"about"` and `"media"` to `AdminTab` type and `navItems` array
-   - Add `AboutSection` component: portrait upload (blob-storage), editable bio fields (textarea per section), contact/social fields, save button
-   - Add `MediaSection` component: drag-and-drop or click-to-upload for images/PDFs, file grid with preview thumbnail, copy URL, delete
-   - Update `PostForm`: replace featuredImage URL input with "Upload Image" button using blob-storage; add "Attachments" section for additional PDF/image uploads
-6. Update `AboutPage.tsx` to fetch and render dynamic about content from backend, falling back to static defaults
-7. Build and validate
+1. Update `main.mo`: add `SiteSettings` type with all customizable fields, add `getSiteSettings` and `setSiteSettings` methods
+2. Create `src/hooks/useSiteSettings.ts`: hook that fetches from backend, caches in localStorage, applies CSS variable overrides to `:root`, provides defaults
+3. Create `src/hooks/useAdminSiteSettings.ts`: admin-specific mutation hook for saving settings
+4. Update `Navbar.tsx` to use `useSiteSettings()` for site title/subtitle
+5. Update `Footer.tsx` to use `useSiteSettings()` for footer content
+6. Update `HomePage.tsx` to use `useSiteSettings()` for hero, about preview, sections
+7. Create `src/pages/AdminCustomizerSection.tsx`: full customizer UI with tabs for Typography, Colors, Layout, Hero, Sections, About Preview, Footer, Navbar
+8. Update `AdminPage.tsx`: add "Customizer" tab with Palette icon, render `AdminCustomizerSection`

@@ -20,6 +20,57 @@ export interface AboutContent {
     email: string;
     portraitUrl: string;
 }
+export interface SiteSettings {
+    headingFont: string;
+    section2Description: string;
+    footerTagline: string;
+    section1Label: string;
+    borderRadius: string;
+    section2Title: string;
+    footerEmail: string;
+    heroCtaSecondary: string;
+    containerMaxWidth: string;
+    colorCard: string;
+    colorBorder: string;
+    aboutPortraitUrl: string;
+    aboutPreviewText1: string;
+    aboutPreviewText2: string;
+    footerInstagram: string;
+    colorMuted: string;
+    section4Label: string;
+    aboutPreviewName: string;
+    footerQuoteAuthor: string;
+    section5Title: string;
+    baseFontSize: string;
+    section3Description: string;
+    sectionPadding: string;
+    colorForeground: string;
+    footerLinkedin: string;
+    footerDescription: string;
+    section2Label: string;
+    aboutPreviewSubtitle: string;
+    section3Title: string;
+    colorBackground: string;
+    siteName: string;
+    section4Description: string;
+    siteSubtitle: string;
+    section5Label: string;
+    section1Title: string;
+    heroCtaPrimary: string;
+    colorPrimary: string;
+    section1Description: string;
+    bodyFont: string;
+    footerCopyright: string;
+    section5Description: string;
+    heroOverlayOpacity: string;
+    heroTitle: string;
+    section3Label: string;
+    section4Title: string;
+    footerQuoteText: string;
+    heroEyebrow: string;
+    heroTagline: string;
+    footerTwitter: string;
+}
 export interface FileMetadata {
     id: string;
     blob: ExternalBlob;
@@ -86,6 +137,7 @@ export interface backendInterface {
     getFileById(id: string): Promise<FileMetadata | null>;
     getLatestPosts(limit: bigint): Promise<Array<Post>>;
     getPostBySlug(slug: string): Promise<Post | null>;
+    getSiteSettings(): Promise<SiteSettings>;
     initialize(): Promise<void>;
     isInitialized(): Promise<boolean>;
     listAllFiles(): Promise<Array<FileMetadata>>;
@@ -100,6 +152,7 @@ export interface backendInterface {
     replaceAllFiles(newFiles: Array<FileMetadata>): Promise<void>;
     setAboutContent(newContent: AboutContent): Promise<void>;
     setActiveQuote(text: string, author: string): Promise<void>;
+    setSiteSettings(settings: SiteSettings): Promise<void>;
     subscribeNewsletter(email: string): Promise<void>;
     toggleDraft(slug: string): Promise<void>;
     toggleFeatured(slug: string): Promise<void>;

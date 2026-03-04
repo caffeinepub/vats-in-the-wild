@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { SiInstagram, SiLinkedin, SiX } from "react-icons/si";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const hostname =
     typeof window !== "undefined" ? window.location.hostname : "";
   const caffeineUrl = `https://caffeine.ai?utm_source=caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(hostname)}`;
+  const settings = useSiteSettings();
 
   return (
     <footer className="bg-card border-t border-border mt-24">
@@ -17,14 +19,13 @@ export default function Footer() {
               to="/"
               className="font-display text-2xl font-semibold text-foreground hover:text-primary transition-colors"
             >
-              Vats in the Wild
+              {settings.siteName}
             </Link>
             <p className="text-xs tracking-widest uppercase text-muted-foreground">
-              Where Forest Meets Statecraft.
+              {settings.footerTagline}
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              An Indian Forest Service Officer's platform for writing on
-              ecology, geopolitics, and personal evolution.
+              {settings.footerDescription}
             </p>
           </div>
 
@@ -79,59 +80,75 @@ export default function Footer() {
               Connect
             </h3>
             <div className="space-y-2">
-              <a
-                href="mailto:contact@vatsinthewild.in"
-                className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                contact@vatsinthewild.in
-              </a>
+              {settings.footerEmail && (
+                <a
+                  href={`mailto:${settings.footerEmail}`}
+                  className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {settings.footerEmail}
+                </a>
+              )}
             </div>
             <div className="flex gap-3 pt-2">
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <SiLinkedin size={18} />
-              </a>
-              <a
-                href="https://x.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="X (Twitter)"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <SiX size={18} />
-              </a>
-              <a
-                href="https://instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                <SiInstagram size={18} />
-              </a>
+              {settings.footerLinkedin && (
+                <a
+                  href={settings.footerLinkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <SiLinkedin size={18} />
+                </a>
+              )}
+              {settings.footerTwitter && (
+                <a
+                  href={settings.footerTwitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="X (Twitter)"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <SiX size={18} />
+                </a>
+              )}
+              {settings.footerInstagram && (
+                <a
+                  href={settings.footerInstagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <SiInstagram size={18} />
+                </a>
+              )}
             </div>
           </div>
         </div>
 
         {/* Quote */}
-        <div className="border-t border-border pt-8 mb-8">
-          <blockquote className="text-center text-sm text-muted-foreground italic max-w-2xl mx-auto">
-            "In every walk with nature, one receives far more than he seeks."
-            <br />
-            <span className="not-italic text-xs tracking-wider uppercase mt-1 block">
-              — John Muir
-            </span>
-          </blockquote>
-        </div>
+        {settings.footerQuoteText && (
+          <div className="border-t border-border pt-8 mb-8">
+            <blockquote className="text-center text-sm text-muted-foreground italic max-w-2xl mx-auto">
+              "{settings.footerQuoteText}"
+              {settings.footerQuoteAuthor && (
+                <>
+                  <br />
+                  <span className="not-italic text-xs tracking-wider uppercase mt-1 block">
+                    — {settings.footerQuoteAuthor}
+                  </span>
+                </>
+              )}
+            </blockquote>
+          </div>
+        )}
 
         {/* Bottom bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© {currentYear} Vats in the Wild. All rights reserved.</p>
+          <p>
+            © {currentYear} {settings.footerCopyright}
+          </p>
           <p>
             Built with ♥ using{" "}
             <a
