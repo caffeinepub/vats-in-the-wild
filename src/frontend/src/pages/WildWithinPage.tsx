@@ -16,6 +16,7 @@ import PostCard from "../components/PostCard";
 import SectionHero from "../components/SectionHero";
 import TagCloud from "../components/TagCloud";
 import { usePostsByCategory } from "../hooks/useQueries";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 // ─── Hobby data ────────────────────────────────────────────────────────────────
 
@@ -325,13 +326,21 @@ function WildWithinPosts() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function WildWithinPage() {
+  const settings = useSiteSettings();
+
   return (
     <div>
       <SectionHero
-        title="The Wild Within"
-        description="Travel, trekking, fitness, photography, music, and reflections on the human experience beyond duty. The other dimensions of a life lived fully."
-        backgroundImage="/assets/generated/section-wild-within.dim_800x500.jpg"
-        label="Explorations"
+        title={settings.wildTitle || "The Wild Within"}
+        description={
+          settings.wildDescription ||
+          "Travel, trekking, fitness, photography, music, and reflections on the human experience beyond duty. The other dimensions of a life lived fully."
+        }
+        backgroundImage={
+          settings.wildPageBg ||
+          "/assets/generated/section-wild-within.dim_800x500.jpg"
+        }
+        label={settings.wildLabel || "Explorations"}
       />
 
       <HobbiesSection />

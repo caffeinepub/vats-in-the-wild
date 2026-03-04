@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -20,10 +21,21 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle, CheckCircle2, Loader2, RotateCcw } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Minus,
+  Plus,
+  RotateCcw,
+  Upload,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { SiteSettings } from "../backend.d";
+import { ExternalBlob } from "../backend";
+import type { FileMetadata, SiteSettings } from "../backend.d";
+import { useAddMediaFile } from "../hooks/useAdminQueries";
 import {
   useGetSiteSettings,
   useSetSiteSettings,
@@ -110,6 +122,149 @@ function FormField({ label, children, hint }: FormFieldProps) {
       <Label className="text-sm font-medium text-foreground/80">{label}</Label>
       {children}
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}
+
+// ─── Image Upload Field ────────────────────────────────────────────────────────
+
+async function fileToUint8Array(file: File): Promise<Uint8Array<ArrayBuffer>> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) =>
+      resolve(new Uint8Array(e.target!.result as ArrayBuffer));
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+interface ImageUploadFieldProps {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  hint?: string;
+  uploadOcid?: string;
+  inputOcid?: string;
+}
+
+function ImageUploadField({
+  label,
+  value,
+  onChange,
+  hint,
+  uploadOcid,
+  inputOcid,
+}: ImageUploadFieldProps) {
+  const [progress, setProgress] = useState<number | null>(null);
+  const addMediaFile = useAddMediaFile();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    try {
+      setProgress(0);
+      const bytes = await fileToUint8Array(file);
+      const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
+        setProgress(pct),
+      );
+      const metadata: FileMetadata = {
+        id: crypto.randomUUID(),
+        blob,
+        mimeType: file.type,
+        filename: file.name,
+        sizeBytes: BigInt(file.size),
+        uploadTimestamp: BigInt(Date.now()),
+      };
+      await addMediaFile.mutateAsync(metadata);
+      onChange(metadata.blob.getDirectURL());
+      toast.success("Image uploaded.");
+    } catch {
+      toast.error("Failed to upload image.");
+    } finally {
+      setProgress(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium text-foreground/80">{label}</Label>
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
+
+      {/* Thumbnail preview */}
+      {value && (
+        <div className="relative w-24 h-14 rounded overflow-hidden border border-border/60 flex-shrink-0">
+          <img
+            src={value}
+            alt="Background preview"
+            className="w-full h-full object-cover"
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute top-0.5 right-0.5 bg-background/80 rounded-full p-0.5 text-muted-foreground hover:text-destructive transition-colors"
+          >
+            <X className="w-2.5 h-2.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          e.target.value = "";
+        }}
+      />
+
+      {/* Upload button */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={progress !== null}
+        className="border-border/60 gap-2 text-xs"
+        data-ocid={uploadOcid}
+      >
+        {progress !== null ? (
+          <>
+            <Loader2 className="w-3 h-3 animate-spin" /> Uploading...
+          </>
+        ) : (
+          <>
+            <Upload className="w-3 h-3" /> Upload Image
+          </>
+        )}
+      </Button>
+
+      {progress !== null && (
+        <div className="space-y-1">
+          <Progress value={progress} className="h-1.5" />
+          <p className="text-xs text-muted-foreground">
+            {Math.round(progress)}%
+          </p>
+        </div>
+      )}
+
+      {/* URL input */}
+      <div className="space-y-1">
+        <p className="text-xs text-muted-foreground">Or paste URL</p>
+        <Input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="https://... or /assets/..."
+          className="bg-input border-border/60 text-xs"
+          data-ocid={inputOcid}
+        />
+      </div>
     </div>
   );
 }
@@ -660,6 +815,87 @@ function HeroTab({
         </div>
       </FormField>
 
+      {/* Newsletter Section */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Newsletter Section
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Newsletter Label">
+              <Input
+                value={settings.newsletterLabel}
+                onChange={(e) => onChange({ newsletterLabel: e.target.value })}
+                className="bg-input border-border/60"
+                data-ocid="admin.customizer.newsletter_label_input"
+              />
+            </FormField>
+            <FormField label="Newsletter Placeholder">
+              <Input
+                value={settings.newsletterPlaceholder}
+                onChange={(e) =>
+                  onChange({ newsletterPlaceholder: e.target.value })
+                }
+                className="bg-input border-border/60"
+                data-ocid="admin.customizer.newsletter_placeholder_input"
+              />
+            </FormField>
+          </div>
+          <FormField label="Newsletter Title">
+            <Input
+              value={settings.newsletterTitle}
+              onChange={(e) => onChange({ newsletterTitle: e.target.value })}
+              className="bg-input border-border/60"
+              data-ocid="admin.customizer.newsletter_title_input"
+            />
+          </FormField>
+          <FormField label="Newsletter Subtitle">
+            <Textarea
+              value={settings.newsletterSubtitle}
+              onChange={(e) => onChange({ newsletterSubtitle: e.target.value })}
+              rows={2}
+              className="bg-input border-border/60 resize-none"
+              data-ocid="admin.customizer.newsletter_subtitle_textarea"
+            />
+          </FormField>
+        </CardContent>
+      </Card>
+
+      {/* Latest Articles Section Heading */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Latest Articles Section Heading
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Label (eyebrow text)">
+              <Input
+                value={settings.latestArticlesLabel}
+                onChange={(e) =>
+                  onChange({ latestArticlesLabel: e.target.value })
+                }
+                className="bg-input border-border/60"
+                data-ocid="admin.customizer.latest_label_input"
+              />
+            </FormField>
+            <FormField label="Section Title">
+              <Input
+                value={settings.latestArticlesTitle}
+                onChange={(e) =>
+                  onChange({ latestArticlesTitle: e.target.value })
+                }
+                className="bg-input border-border/60"
+                data-ocid="admin.customizer.latest_title_input"
+              />
+            </FormField>
+          </div>
+        </CardContent>
+      </Card>
+
       <SaveButton isPending={isPending} onClick={onSave} />
     </div>
   );
@@ -703,6 +939,63 @@ const SECTION_KEYS: {
     labelKey: "section5Label",
     descKey: "section5Description",
   },
+  {
+    n: 6,
+    titleKey: "section6Title",
+    labelKey: "section6Label",
+    descKey: "section6Description",
+  },
+  {
+    n: 7,
+    titleKey: "section7Title",
+    labelKey: "section7Label",
+    descKey: "section7Description",
+  },
+  {
+    n: 8,
+    titleKey: "section8Title",
+    labelKey: "section8Label",
+    descKey: "section8Description",
+  },
+];
+
+// Per-page hero text keys
+const PAGE_HERO_KEYS: {
+  page: string;
+  titleKey: keyof SiteSettings;
+  labelKey: keyof SiteSettings;
+  descKey: keyof SiteSettings;
+}[] = [
+  {
+    page: "International Relations",
+    titleKey: "irTitle",
+    labelKey: "irLabel",
+    descKey: "irDescription",
+  },
+  {
+    page: "Forest & Field Notes",
+    titleKey: "forestTitle",
+    labelKey: "forestLabel",
+    descKey: "forestDescription",
+  },
+  {
+    page: "Beyond Cutoff (UPSC)",
+    titleKey: "upscTitle",
+    labelKey: "upscLabel",
+    descKey: "upscDescription",
+  },
+  {
+    page: "The Wild Within",
+    titleKey: "wildTitle",
+    labelKey: "wildLabel",
+    descKey: "wildDescription",
+  },
+  {
+    page: "Personal Essays",
+    titleKey: "essaysTitle",
+    labelKey: "essaysLabel",
+    descKey: "essaysDescription",
+  },
 ];
 
 function SectionsTab({
@@ -716,17 +1009,83 @@ function SectionsTab({
   onSave: () => void;
   isPending: boolean;
 }) {
+  const currentCount = Math.min(
+    8,
+    Math.max(5, Number.parseInt(settings.sectionCount) || 5),
+  );
+
+  const handleAddSection = () => {
+    if (currentCount < 8) {
+      onChange({ sectionCount: String(currentCount + 1) });
+    }
+  };
+
+  const handleRemoveSection = () => {
+    if (currentCount > 5) {
+      onChange({ sectionCount: String(currentCount - 1) });
+    }
+  };
+
   return (
     <div className="space-y-5">
-      {SECTION_KEYS.map((sk) => (
+      {/* Active Sections Control */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Active Sections
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleRemoveSection}
+                disabled={currentCount <= 5}
+                className="border-border/60 gap-1.5 text-xs"
+                data-ocid="admin.customizer.sections.remove_button"
+              >
+                <Minus className="w-3 h-3" /> Remove Section
+              </Button>
+              <span className="text-sm font-medium text-foreground px-3 py-1.5 bg-primary/10 border border-primary/20 rounded text-center min-w-[2.5rem]">
+                {currentCount}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddSection}
+                disabled={currentCount >= 8}
+                className="border-border/60 gap-1.5 text-xs"
+                data-ocid="admin.customizer.sections.add_button"
+              >
+                <Plus className="w-3 h-3" /> Add Section
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Min 5, Max 8 sections shown on homepage
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section Cards */}
+      {SECTION_KEYS.filter((sk) => sk.n <= currentCount).map((sk) => (
         <Card
           key={sk.n}
           className="bg-background/30 border-border/40"
           data-ocid={`admin.customizer.sections.item.${sk.n}`}
         >
           <CardHeader className="pb-3">
-            <CardTitle className="font-display text-base">
+            <CardTitle className="font-display text-base flex items-center gap-2">
               Section {sk.n}
+              {sk.n > 5 && (
+                <span className="text-xs font-normal text-muted-foreground px-1.5 py-0.5 bg-muted/60 rounded">
+                  Custom
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -758,6 +1117,198 @@ function SectionsTab({
           </CardContent>
         </Card>
       ))}
+
+      {/* Per-Page Hero Text */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Per-Page Hero Text
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <p className="text-xs text-muted-foreground">
+            Customize the title, label, and description shown at the top of each
+            section page.
+          </p>
+          {PAGE_HERO_KEYS.map((pk) => (
+            <div
+              key={pk.page}
+              className="border border-border/30 rounded p-4 space-y-3"
+            >
+              <p className="text-sm font-semibold text-foreground">{pk.page}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField label="Page Title">
+                  <Input
+                    value={settings[pk.titleKey] as string}
+                    onChange={(e) =>
+                      onChange({ [pk.titleKey]: e.target.value })
+                    }
+                    className="bg-input border-border/60"
+                  />
+                </FormField>
+                <FormField label="Label / Eyebrow">
+                  <Input
+                    value={settings[pk.labelKey] as string}
+                    onChange={(e) =>
+                      onChange({ [pk.labelKey]: e.target.value })
+                    }
+                    className="bg-input border-border/60"
+                  />
+                </FormField>
+              </div>
+              <FormField label="Description">
+                <Textarea
+                  value={settings[pk.descKey] as string}
+                  onChange={(e) => onChange({ [pk.descKey]: e.target.value })}
+                  rows={2}
+                  className="bg-input border-border/60 resize-none"
+                />
+              </FormField>
+            </div>
+          ))}
+
+          {/* About Page Title/Subtitle */}
+          <div className="border border-border/30 rounded p-4 space-y-3">
+            <p className="text-sm font-semibold text-foreground">About Page</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Page Title">
+                <Input
+                  value={settings.aboutPageTitle}
+                  onChange={(e) => onChange({ aboutPageTitle: e.target.value })}
+                  className="bg-input border-border/60"
+                />
+              </FormField>
+              <FormField label="Page Subtitle">
+                <Input
+                  value={settings.aboutPageSubtitle}
+                  onChange={(e) =>
+                    onChange({ aboutPageSubtitle: e.target.value })
+                  }
+                  className="bg-input border-border/60"
+                />
+              </FormField>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <SaveButton isPending={isPending} onClick={onSave} />
+    </div>
+  );
+}
+
+// ─── Backgrounds Tab ───────────────────────────────────────────────────────────
+
+function BackgroundsTab({
+  settings,
+  onChange,
+  onSave,
+  isPending,
+}: {
+  settings: SiteSettings;
+  onChange: (partial: Partial<SiteSettings>) => void;
+  onSave: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="space-y-6">
+      {/* Page Backgrounds */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Page Backgrounds
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-xs text-muted-foreground">
+            Upload or paste a URL for each page's background image. Leave empty
+            to use the default image.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ImageUploadField
+              label="Homepage Hero"
+              value={settings.heroBackgroundImage}
+              onChange={(url) => onChange({ heroBackgroundImage: url })}
+              hint="Main hero background image on the homepage"
+              uploadOcid="admin.customizer.bg.hero_upload_button"
+              inputOcid="admin.customizer.bg.hero_url_input"
+            />
+            <ImageUploadField
+              label="International Relations Page"
+              value={settings.irPageBg}
+              onChange={(url) => onChange({ irPageBg: url })}
+              uploadOcid="admin.customizer.bg.ir_upload_button"
+              inputOcid="admin.customizer.bg.ir_url_input"
+            />
+            <ImageUploadField
+              label="Forest & Field Notes Page"
+              value={settings.forestPageBg}
+              onChange={(url) => onChange({ forestPageBg: url })}
+              uploadOcid="admin.customizer.bg.forest_upload_button"
+              inputOcid="admin.customizer.bg.forest_url_input"
+            />
+            <ImageUploadField
+              label="Beyond Cutoff (UPSC) Page"
+              value={settings.upscPageBg}
+              onChange={(url) => onChange({ upscPageBg: url })}
+              uploadOcid="admin.customizer.bg.upsc_upload_button"
+              inputOcid="admin.customizer.bg.upsc_url_input"
+            />
+            <ImageUploadField
+              label="The Wild Within Page"
+              value={settings.wildPageBg}
+              onChange={(url) => onChange({ wildPageBg: url })}
+              uploadOcid="admin.customizer.bg.wild_upload_button"
+              inputOcid="admin.customizer.bg.wild_url_input"
+            />
+            <ImageUploadField
+              label="Personal Essays Page"
+              value={settings.essaysPageBg}
+              onChange={(url) => onChange({ essaysPageBg: url })}
+              uploadOcid="admin.customizer.bg.essays_upload_button"
+              inputOcid="admin.customizer.bg.essays_url_input"
+            />
+            <ImageUploadField
+              label="About Page"
+              value={settings.aboutPageBg}
+              onChange={(url) => onChange({ aboutPageBg: url })}
+              uploadOcid="admin.customizer.bg.about_upload_button"
+              inputOcid="admin.customizer.bg.about_url_input"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section Card Images */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Section Card Images
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-xs text-muted-foreground">
+            Override the image displayed on each section card on the homepage.
+            Leave empty to use the default.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => {
+              const imageKey = `section${n}Image` as keyof SiteSettings;
+              return (
+                <ImageUploadField
+                  key={n}
+                  label={`Section ${n} Card Image`}
+                  value={settings[imageKey] as string}
+                  onChange={(url) => onChange({ [imageKey]: url })}
+                  uploadOcid={`admin.customizer.bg.section${n}_upload_button`}
+                  inputOcid={`admin.customizer.bg.section${n}_url_input`}
+                />
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <SaveButton isPending={isPending} onClick={onSave} />
     </div>
   );
@@ -1093,6 +1644,13 @@ export default function AdminCustomizerSection() {
             Sections Grid
           </TabsTrigger>
           <TabsTrigger
+            value="backgrounds"
+            className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            data-ocid="admin.customizer.backgrounds_tab"
+          >
+            Backgrounds
+          </TabsTrigger>
+          <TabsTrigger
             value="about"
             className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             data-ocid="admin.customizer.about_tab"
@@ -1164,6 +1722,19 @@ export default function AdminCustomizerSection() {
           <Card className="bg-card border-border/40">
             <CardContent className="p-6">
               <SectionsTab
+                settings={draft}
+                onChange={handleChange}
+                onSave={handleSave}
+                isPending={setSiteSettings.isPending}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backgrounds" className="mt-0">
+          <Card className="bg-card border-border/40">
+            <CardContent className="p-6">
+              <BackgroundsTab
                 settings={draft}
                 onChange={handleChange}
                 onSave={handleSave}

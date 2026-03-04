@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { SiInstagram, SiLinkedin, SiX } from "react-icons/si";
 import type { AboutContent } from "../backend.d";
 import { useActor } from "../hooks/useActor";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 
 const VALUES = [
   {
@@ -78,6 +79,7 @@ const DEFAULT_BIO_SECTIONS = [
 ];
 
 export default function AboutPage() {
+  const settings = useSiteSettings();
   const { actor, isFetching } = useActor();
   const { data: aboutData } = useQuery<AboutContent | null>({
     queryKey: ["aboutContent"],
@@ -109,16 +111,31 @@ export default function AboutPage() {
   return (
     <div className="pt-16">
       {/* Page Header */}
-      <section className="py-20 lg:py-28 bg-card border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="py-20 lg:py-28 border-b border-border relative overflow-hidden"
+        style={
+          settings.aboutPageBg
+            ? {
+                backgroundImage: `url(${settings.aboutPageBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : { background: "oklch(var(--card))" }
+        }
+      >
+        {settings.aboutPageBg && (
+          <div className="absolute inset-0 bg-background/75" />
+        )}
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-4">
-            About
+            {settings.aboutPageTitle || "About"}
           </p>
           <h1 className="font-display text-5xl sm:text-6xl font-bold text-foreground mb-4 leading-tight">
             Shubham Vats
           </h1>
           <p className="text-lg text-muted-foreground tracking-wide">
-            Indian Forest Service Officer · Writer · Observer
+            {settings.aboutPageSubtitle || "Indian Forest Service Officer"} ·
+            Writer · Observer
           </p>
         </div>
       </section>

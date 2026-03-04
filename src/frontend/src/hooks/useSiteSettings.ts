@@ -61,6 +61,65 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   section5Description:
     "Long-form reflections on leadership, public service, growth, and solitude.",
   section5Label: "Reflections",
+  // Dynamic sections
+  sectionCount: "5",
+  section6Title: "",
+  section6Description: "",
+  section6Label: "",
+  section7Title: "",
+  section7Description: "",
+  section7Label: "",
+  section8Title: "",
+  section8Description: "",
+  section8Label: "",
+  // Background images
+  heroBackgroundImage: "",
+  section1Image: "",
+  section2Image: "",
+  section3Image: "",
+  section4Image: "",
+  section5Image: "",
+  section6Image: "",
+  section7Image: "",
+  section8Image: "",
+  irPageBg: "",
+  forestPageBg: "",
+  upscPageBg: "",
+  wildPageBg: "",
+  essaysPageBg: "",
+  aboutPageBg: "",
+  // Per-page hero text
+  irTitle: "International Relations",
+  irDescription:
+    "Analytical essays on geopolitics, India's foreign policy, strategic affairs, and global power shifts. Written from the field, not from think-tank corridors.",
+  irLabel: "World Affairs",
+  forestTitle: "Forest & Field Notes",
+  forestDescription:
+    "Field experiences, wildlife insights, conservation challenges, and policy reflections from the forest floor.",
+  forestLabel: "Conservation",
+  upscTitle: "Beyond Cutoff",
+  upscDescription:
+    "High-quality insights for civil services aspirants: strategy, mindset, books, and discipline.",
+  upscLabel: "UPSC Strategy",
+  wildTitle: "The Wild Within",
+  wildDescription:
+    "Travel, trekking, fitness, photography, terrarium making, and reflections on the human experience.",
+  wildLabel: "Explorations",
+  essaysTitle: "Personal Essays",
+  essaysDescription:
+    "Long-form reflections on leadership, public service, growth, and solitude.",
+  essaysLabel: "Reflections",
+  aboutPageTitle: "About",
+  aboutPageSubtitle: "Indian Forest Service Officer",
+  // Newsletter
+  newsletterLabel: "Dispatches",
+  newsletterTitle: "Stay in the Field",
+  newsletterSubtitle:
+    "Occasional dispatches — essays, insights, field notes. No noise.",
+  newsletterPlaceholder: "Your email address",
+  // Latest articles
+  latestArticlesLabel: "Recent Writing",
+  latestArticlesTitle: "From the Journal",
 };
 
 // Map font names to Google Fonts query params

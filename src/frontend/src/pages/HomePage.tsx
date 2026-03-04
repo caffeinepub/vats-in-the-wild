@@ -10,27 +10,26 @@ import QuoteBlock from "../components/QuoteBlock";
 import { useActiveQuote, useLatestPosts } from "../hooks/useQueries";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 
-const SECTION_PATHS = [
-  {
-    image: "/assets/generated/section-international-relations.dim_800x500.jpg",
-    to: "/international-relations",
-  },
-  {
-    image: "/assets/generated/section-forest-notes.dim_800x500.jpg",
-    to: "/forest-field-notes",
-  },
-  {
-    image: "/assets/generated/section-upsc.dim_800x500.jpg",
-    to: "/beyond-cutoff",
-  },
-  {
-    image: "/assets/generated/section-wild-within.dim_800x500.jpg",
-    to: "/wild-within",
-  },
-  {
-    image: "/assets/generated/section-personal-essays.dim_800x500.jpg",
-    to: "/personal-essays",
-  },
+const SECTION_DEFAULT_IMAGES = [
+  "/assets/generated/section-international-relations.dim_800x500.jpg",
+  "/assets/generated/section-forest-notes.dim_800x500.jpg",
+  "/assets/generated/section-upsc.dim_800x500.jpg",
+  "/assets/generated/section-wild-within.dim_800x500.jpg",
+  "/assets/generated/section-personal-essays.dim_800x500.jpg",
+  "",
+  "",
+  "",
+];
+
+const SECTION_ROUTES = [
+  "/international-relations",
+  "/forest-field-notes",
+  "/beyond-cutoff",
+  "/wild-within",
+  "/personal-essays",
+  "#",
+  "#",
+  "#",
 ];
 
 const DEFAULT_POSTS = [
@@ -111,39 +110,72 @@ export default function HomePage() {
   const [heroVisible, setHeroVisible] = useState(false);
   const settings = useSiteSettings();
 
-  // Build section cards from settings
-  const sectionCards = [
+  // Build section cards from settings (supports 5–8 dynamic sections)
+  const sectionCount = Math.min(
+    8,
+    Math.max(5, Number.parseInt(settings.sectionCount) || 5),
+  );
+
+  const allSectionData = [
     {
       title: settings.section1Title,
       description: settings.section1Description,
       label: settings.section1Label,
-      ...SECTION_PATHS[0],
+      image: settings.section1Image || SECTION_DEFAULT_IMAGES[0],
+      to: SECTION_ROUTES[0],
     },
     {
       title: settings.section2Title,
       description: settings.section2Description,
       label: settings.section2Label,
-      ...SECTION_PATHS[1],
+      image: settings.section2Image || SECTION_DEFAULT_IMAGES[1],
+      to: SECTION_ROUTES[1],
     },
     {
       title: settings.section3Title,
       description: settings.section3Description,
       label: settings.section3Label,
-      ...SECTION_PATHS[2],
+      image: settings.section3Image || SECTION_DEFAULT_IMAGES[2],
+      to: SECTION_ROUTES[2],
     },
     {
       title: settings.section4Title,
       description: settings.section4Description,
       label: settings.section4Label,
-      ...SECTION_PATHS[3],
+      image: settings.section4Image || SECTION_DEFAULT_IMAGES[3],
+      to: SECTION_ROUTES[3],
     },
     {
       title: settings.section5Title,
       description: settings.section5Description,
       label: settings.section5Label,
-      ...SECTION_PATHS[4],
+      image: settings.section5Image || SECTION_DEFAULT_IMAGES[4],
+      to: SECTION_ROUTES[4],
+    },
+    {
+      title: settings.section6Title || "Section 6",
+      description: settings.section6Description,
+      label: settings.section6Label,
+      image: settings.section6Image || SECTION_DEFAULT_IMAGES[5],
+      to: SECTION_ROUTES[5],
+    },
+    {
+      title: settings.section7Title || "Section 7",
+      description: settings.section7Description,
+      label: settings.section7Label,
+      image: settings.section7Image || SECTION_DEFAULT_IMAGES[6],
+      to: SECTION_ROUTES[6],
+    },
+    {
+      title: settings.section8Title || "Section 8",
+      description: settings.section8Description,
+      label: settings.section8Label,
+      image: settings.section8Image || SECTION_DEFAULT_IMAGES[7],
+      to: SECTION_ROUTES[7],
     },
   ];
+
+  const sectionCards = allSectionData.slice(0, sectionCount);
 
   useEffect(() => {
     document.title =
@@ -173,8 +205,9 @@ export default function HomePage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage:
-              "url(/assets/generated/hero-forest-dawn.dim_1600x900.jpg)",
+            backgroundImage: settings.heroBackgroundImage
+              ? `url(${settings.heroBackgroundImage})`
+              : "url(/assets/generated/hero-forest-dawn.dim_1600x900.jpg)",
           }}
         />
         {/* Gradient overlay */}
@@ -328,19 +361,27 @@ export default function HomePage() {
           >
             {sectionCards.map((section, i) => (
               <Link
-                key={section.to}
-                to={section.to}
+                key={`${section.to}-${i}`}
+                to={section.to as never}
                 data-ocid={`sections.card.${i + 1}`}
                 className="group scroll-animate opacity-0 translate-y-6 transition-all duration-700 block bg-background border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary/40"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 <div className="aspect-[16/9] overflow-hidden">
-                  <img
-                    src={section.image}
-                    alt={section.title}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 group-hover:brightness-110"
-                  />
+                  {section.image ? (
+                    <img
+                      src={section.image}
+                      alt={section.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 group-hover:brightness-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-muted/40 flex items-center justify-center">
+                      <span className="text-muted-foreground/40 text-sm">
+                        No image
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-6">
                   <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-2">
@@ -365,10 +406,10 @@ export default function HomePage() {
           <div className="flex items-end justify-between mb-12 scroll-animate opacity-0 translate-y-6 transition-all duration-700">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
-                Recent Writing
+                {settings.latestArticlesLabel}
               </p>
               <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground">
-                From the Journal
+                {settings.latestArticlesTitle}
               </h2>
             </div>
             <Link
@@ -421,16 +462,16 @@ export default function HomePage() {
           <div className="scroll-animate opacity-0 translate-y-6 transition-all duration-700 space-y-6">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
-                Dispatches
+                {settings.newsletterLabel}
               </p>
               <h2 className="font-display text-3xl font-bold text-foreground mb-3">
-                Stay in the Field
+                {settings.newsletterTitle}
               </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Occasional dispatches — essays, insights, field notes. No noise.
+                {settings.newsletterSubtitle}
               </p>
             </div>
-            <NewsletterForm />
+            <NewsletterForm placeholder={settings.newsletterPlaceholder} />
           </div>
         </div>
       </section>

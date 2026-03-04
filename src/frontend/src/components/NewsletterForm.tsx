@@ -4,7 +4,13 @@ import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useSubscribeNewsletter } from "../hooks/useQueries";
 
-export default function NewsletterForm() {
+interface NewsletterFormProps {
+  placeholder?: string;
+}
+
+export default function NewsletterForm({
+  placeholder = "your@email.com",
+}: NewsletterFormProps) {
   const [email, setEmail] = useState("");
   const { mutate, isPending, isSuccess, isError } = useSubscribeNewsletter();
 
@@ -36,7 +42,7 @@ export default function NewsletterForm() {
       <div className="flex flex-col sm:flex-row gap-3">
         <Input
           type="email"
-          placeholder="your@email.com"
+          placeholder={placeholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

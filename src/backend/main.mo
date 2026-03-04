@@ -99,11 +99,13 @@ actor {
     heroCtaPrimary : Text;
     heroCtaSecondary : Text;
     heroOverlayOpacity : Text;
+
     aboutPreviewText1 : Text;
     aboutPreviewText2 : Text;
     aboutPreviewName : Text;
     aboutPreviewSubtitle : Text;
     aboutPortraitUrl : Text;
+
     footerTagline : Text;
     footerDescription : Text;
     footerEmail : Text;
@@ -113,18 +115,21 @@ actor {
     footerQuoteText : Text;
     footerQuoteAuthor : Text;
     footerCopyright : Text;
+
     colorBackground : Text;
     colorForeground : Text;
     colorPrimary : Text;
     colorCard : Text;
     colorMuted : Text;
     colorBorder : Text;
+
     headingFont : Text;
     bodyFont : Text;
     baseFontSize : Text;
     containerMaxWidth : Text;
     sectionPadding : Text;
     borderRadius : Text;
+
     section1Title : Text;
     section1Description : Text;
     section1Label : Text;
@@ -140,6 +145,58 @@ actor {
     section5Title : Text;
     section5Description : Text;
     section5Label : Text;
+
+    sectionCount : Text;
+    section6Title : Text;
+    section6Description : Text;
+    section6Label : Text;
+    section7Title : Text;
+    section7Description : Text;
+    section7Label : Text;
+    section8Title : Text;
+    section8Description : Text;
+    section8Label : Text;
+
+    heroBackgroundImage : Text;
+    section1Image : Text;
+    section2Image : Text;
+    section3Image : Text;
+    section4Image : Text;
+    section5Image : Text;
+    section6Image : Text;
+    section7Image : Text;
+    section8Image : Text;
+    irPageBg : Text;
+    forestPageBg : Text;
+    upscPageBg : Text;
+    wildPageBg : Text;
+    essaysPageBg : Text;
+    aboutPageBg : Text;
+
+    irTitle : Text;
+    irDescription : Text;
+    irLabel : Text;
+    forestTitle : Text;
+    forestDescription : Text;
+    forestLabel : Text;
+    upscTitle : Text;
+    upscDescription : Text;
+    upscLabel : Text;
+    wildTitle : Text;
+    wildDescription : Text;
+    wildLabel : Text;
+    essaysTitle : Text;
+    essaysDescription : Text;
+    essaysLabel : Text;
+    aboutPageTitle : Text;
+    aboutPageSubtitle : Text;
+
+    newsletterLabel : Text;
+    newsletterTitle : Text;
+    newsletterSubtitle : Text;
+    newsletterPlaceholder : Text;
+    latestArticlesLabel : Text;
+    latestArticlesTitle : Text;
   };
 
   module PostEntity {
@@ -597,6 +654,54 @@ actor {
           section5Title = "Personal Essays";
           section5Description = "Long-form reflections on leadership, public service, growth, and solitude.";
           section5Label = "Reflections";
+          sectionCount = "5";
+          section6Title = "";
+          section6Description = "";
+          section6Label = "";
+          section7Title = "";
+          section7Description = "";
+          section7Label = "";
+          section8Title = "";
+          section8Description = "";
+          section8Label = "";
+          heroBackgroundImage = "";
+          section1Image = "";
+          section2Image = "";
+          section3Image = "";
+          section4Image = "";
+          section5Image = "";
+          section6Image = "";
+          section7Image = "";
+          section8Image = "";
+          irPageBg = "";
+          forestPageBg = "";
+          upscPageBg = "";
+          wildPageBg = "";
+          essaysPageBg = "";
+          aboutPageBg = "";
+          irTitle = "International Relations";
+          irDescription = "Analytical essays on geopolitics, India`s foreign policy, strategic affairs, and global power shifts.";
+          irLabel = "World Affairs";
+          forestTitle = "Forest & Field Notes";
+          forestDescription = "Field experiences, wildlife insights, conservation challenges, and policy reflections.";
+          forestLabel = "Conservation";
+          upscTitle = "Beyond Cutoff";
+          upscDescription = "High-quality insights for civil services aspirants: strategy, mindset, and discipline.";
+          upscLabel = "UPSC Strategy";
+          wildTitle = "The Wild Within";
+          wildDescription = "Travel, trekking, fitness, photography, and reflections on the human experience.";
+          wildLabel = "Explorations";
+          essaysTitle = "Personal Essays";
+          essaysDescription = "Long-form reflections on leadership, public service, growth, and solitude.";
+          essaysLabel = "Reflections";
+          aboutPageTitle = "About";
+          aboutPageSubtitle = "Indian Forest Service Officer";
+          newsletterLabel = "Dispatches";
+          newsletterTitle = "Stay in the Field";
+          newsletterSubtitle = "Occasional dispatches — essays, insights, field notes. No noise.";
+          newsletterPlaceholder = "Your email address";
+          latestArticlesLabel = "Recent Writing";
+          latestArticlesTitle = "From the Journal";
         };
       };
     };

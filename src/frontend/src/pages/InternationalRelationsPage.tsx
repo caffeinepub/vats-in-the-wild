@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Category } from "../backend.d";
+import { useSiteSettings } from "../hooks/useSiteSettings";
 import SectionListPage from "./SectionListPage";
 
 const SUBCATEGORIES = [
@@ -11,6 +12,8 @@ const SUBCATEGORIES = [
 ];
 
 export default function InternationalRelationsPage() {
+  const settings = useSiteSettings();
+
   useEffect(() => {
     document.title =
       "International Relations & World Affairs — Vats in the Wild";
@@ -19,10 +22,16 @@ export default function InternationalRelationsPage() {
   return (
     <SectionListPage
       category={Category.international_relations}
-      title="International Relations"
-      description="Analytical essays on geopolitics, India's foreign policy, strategic affairs, and global power shifts. Written from the field, not from think-tank corridors."
-      backgroundImage="/assets/generated/section-international-relations.dim_800x500.jpg"
-      label="World Affairs"
+      title={settings.irTitle || "International Relations"}
+      description={
+        settings.irDescription ||
+        "Analytical essays on geopolitics, India's foreign policy, strategic affairs, and global power shifts. Written from the field, not from think-tank corridors."
+      }
+      backgroundImage={
+        settings.irPageBg ||
+        "/assets/generated/section-international-relations.dim_800x500.jpg"
+      }
+      label={settings.irLabel || "World Affairs"}
       subcategories={SUBCATEGORIES}
     />
   );
