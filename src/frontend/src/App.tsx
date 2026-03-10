@@ -20,6 +20,7 @@ import HomePage from "./pages/HomePage";
 import InternationalRelationsPage from "./pages/InternationalRelationsPage";
 import PersonalEssaysPage from "./pages/PersonalEssaysPage";
 import ReadingPage from "./pages/ReadingPage";
+import VisualEditorPage from "./pages/VisualEditorPage";
 import WildWithinPage from "./pages/WildWithinPage";
 
 // Theme context
@@ -49,8 +50,9 @@ function BackendInit() {
 function RootLayout() {
   const routerState = useRouterState();
   const isAdmin = routerState.location.pathname.startsWith("/admin");
+  const isEdit = routerState.location.pathname.startsWith("/edit");
 
-  if (isAdmin) {
+  if (isAdmin || isEdit) {
     return (
       <>
         <BackendInit />
@@ -135,6 +137,12 @@ const adminRoute = createRoute({
   component: AdminPage,
 });
 
+const editRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/edit",
+  component: VisualEditorPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   irRoute,
@@ -146,6 +154,7 @@ const routeTree = rootRoute.addChildren([
   readingRoute,
   articleRoute,
   adminRoute,
+  editRoute,
 ]);
 
 const router = createRouter({ routeTree });

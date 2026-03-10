@@ -138,6 +138,56 @@ async function fileToUint8Array(file: File): Promise<Uint8Array<ArrayBuffer>> {
   });
 }
 
+// Compress image using canvas before upload (makes uploads 10-20x faster)
+async function compressImage(file: File): Promise<Uint8Array<ArrayBuffer>> {
+  // Only compress JPEG/WebP/AVIF — keep PNG as-is for transparency
+  if (file.type === "image/png") {
+    return fileToUint8Array(file);
+  }
+
+  const MAX_DIM = 1600;
+  const QUALITY = 0.82;
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIM) / width);
+          width = MAX_DIM;
+        } else {
+          width = Math.round((width * MAX_DIM) / height);
+          height = MAX_DIM;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error("Compression failed"));
+            return;
+          }
+          blob
+            .arrayBuffer()
+            .then((buf) => resolve(new Uint8Array(buf)))
+            .catch(reject);
+        },
+        "image/jpeg",
+        QUALITY,
+      );
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 interface ImageUploadFieldProps {
   label: string;
   value: string;
@@ -166,16 +216,16 @@ function ImageUploadField({
     }
     try {
       setProgress(0);
-      const bytes = await fileToUint8Array(file);
+      const bytes = await compressImage(file);
       const blob = ExternalBlob.fromBytes(bytes).withUploadProgress((pct) =>
         setProgress(pct),
       );
       const metadata: FileMetadata = {
         id: crypto.randomUUID(),
         blob,
-        mimeType: file.type,
+        mimeType: file.type === "image/png" ? file.type : "image/jpeg",
         filename: file.name,
-        sizeBytes: BigInt(file.size),
+        sizeBytes: BigInt(bytes.byteLength),
         uploadTimestamp: BigInt(Date.now()),
       };
       await addMediaFile.mutateAsync(metadata);
@@ -1309,6 +1359,103 @@ function BackgroundsTab({
         </CardContent>
       </Card>
 
+      {/* Homepage Inner Section Backgrounds */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            Homepage Inner Sections
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-xs text-muted-foreground">
+            Set a background image for each section on the homepage. A dark
+            overlay is applied automatically so text stays readable.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ImageUploadField
+              label="About Preview Section"
+              value={settings.homepageAboutBg}
+              onChange={(url) => onChange({ homepageAboutBg: url })}
+              uploadOcid="admin.customizer.bg.homepage_about_upload_button"
+              inputOcid="admin.customizer.bg.homepage_about_url_input"
+            />
+            <ImageUploadField
+              label="Featured Sections Grid"
+              value={settings.homepageSectionsBg}
+              onChange={(url) => onChange({ homepageSectionsBg: url })}
+              uploadOcid="admin.customizer.bg.homepage_sections_upload_button"
+              inputOcid="admin.customizer.bg.homepage_sections_url_input"
+            />
+            <ImageUploadField
+              label="Latest Articles Section"
+              value={settings.homepageLatestBg}
+              onChange={(url) => onChange({ homepageLatestBg: url })}
+              uploadOcid="admin.customizer.bg.homepage_latest_upload_button"
+              inputOcid="admin.customizer.bg.homepage_latest_url_input"
+            />
+            <ImageUploadField
+              label="Newsletter Section"
+              value={settings.homepageNewsletterBg}
+              onChange={(url) => onChange({ homepageNewsletterBg: url })}
+              uploadOcid="admin.customizer.bg.homepage_newsletter_upload_button"
+              inputOcid="admin.customizer.bg.homepage_newsletter_url_input"
+            />
+            <ImageUploadField
+              label="Quote Section"
+              value={settings.homepageQuoteBg}
+              onChange={(url) => onChange({ homepageQuoteBg: url })}
+              uploadOcid="admin.customizer.bg.homepage_quote_upload_button"
+              inputOcid="admin.customizer.bg.homepage_quote_url_input"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* About Page Inner Section Backgrounds */}
+      <Card className="bg-background/30 border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="font-display text-base">
+            About Page Inner Sections
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-xs text-muted-foreground">
+            Set a background image for each section on the About page. A dark
+            overlay is applied automatically so text stays readable.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ImageUploadField
+              label="Bio Section"
+              value={settings.aboutBioBg}
+              onChange={(url) => onChange({ aboutBioBg: url })}
+              uploadOcid="admin.customizer.bg.about_bio_upload_button"
+              inputOcid="admin.customizer.bg.about_bio_url_input"
+            />
+            <ImageUploadField
+              label="Principles / Values Section"
+              value={settings.aboutValuesBg}
+              onChange={(url) => onChange({ aboutValuesBg: url })}
+              uploadOcid="admin.customizer.bg.about_values_upload_button"
+              inputOcid="admin.customizer.bg.about_values_url_input"
+            />
+            <ImageUploadField
+              label="What I Write About Section"
+              value={settings.aboutWritingBg}
+              onChange={(url) => onChange({ aboutWritingBg: url })}
+              uploadOcid="admin.customizer.bg.about_writing_upload_button"
+              inputOcid="admin.customizer.bg.about_writing_url_input"
+            />
+            <ImageUploadField
+              label="Contact Section"
+              value={settings.aboutContactBg}
+              onChange={(url) => onChange({ aboutContactBg: url })}
+              uploadOcid="admin.customizer.bg.about_contact_upload_button"
+              inputOcid="admin.customizer.bg.about_contact_url_input"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <SaveButton isPending={isPending} onClick={onSave} />
     </div>
   );
@@ -1369,18 +1516,14 @@ function AboutTab({
         />
       </FormField>
 
-      <FormField
-        label="Portrait URL (Homepage)"
-        hint="URL for the portrait shown in the about preview on the homepage. Leave empty to use the default."
-      >
-        <Input
-          value={settings.aboutPortraitUrl}
-          onChange={(e) => onChange({ aboutPortraitUrl: e.target.value })}
-          placeholder="https://... or /assets/generated/portrait.jpg"
-          className="bg-input border-border/60"
-          data-ocid="admin.customizer.about_portrait_input"
-        />
-      </FormField>
+      <ImageUploadField
+        label="Portrait Photo (Homepage)"
+        value={settings.aboutPortraitUrl}
+        onChange={(url) => onChange({ aboutPortraitUrl: url })}
+        hint="Shown in the about preview on the homepage."
+        uploadOcid="admin.customizer.about_portrait_upload_button"
+        inputOcid="admin.customizer.about_portrait_input"
+      />
 
       <SaveButton isPending={isPending} onClick={onSave} />
     </div>

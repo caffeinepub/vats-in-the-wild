@@ -32,6 +32,7 @@ export interface SiteSettings {
     borderRadius: string;
     section7Title: string;
     section2Title: string;
+    aboutBioBg: string;
     forestDescription: string;
     irPageBg: string;
     footerEmail: string;
@@ -49,6 +50,7 @@ export interface SiteSettings {
     aboutPreviewText2: string;
     footerInstagram: string;
     colorMuted: string;
+    homepageAboutBg: string;
     section4Label: string;
     aboutPreviewName: string;
     footerQuoteAuthor: string;
@@ -65,13 +67,17 @@ export interface SiteSettings {
     upscTitle: string;
     section6Image: string;
     section1Image: string;
+    aboutWritingBg: string;
     aboutPageTitle: string;
+    aboutContactBg: string;
     colorForeground: string;
     wildPageBg: string;
     footerLinkedin: string;
+    homepageQuoteBg: string;
     footerDescription: string;
     section7Label: string;
     section2Label: string;
+    homepageSectionsBg: string;
     section8Title: string;
     aboutPreviewSubtitle: string;
     section3Title: string;
@@ -95,7 +101,10 @@ export interface SiteSettings {
     sectionCount: string;
     colorPrimary: string;
     wildTitle: string;
+    homepageLatestBg: string;
     upscLabel: string;
+    homepageNewsletterBg: string;
+    aboutValuesBg: string;
     section7Image: string;
     section2Image: string;
     section1Description: string;

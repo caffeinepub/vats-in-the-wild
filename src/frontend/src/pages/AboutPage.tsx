@@ -141,8 +141,22 @@ export default function AboutPage() {
       </section>
 
       {/* Bio Section */}
-      <section className="py-16 lg:py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="py-16 lg:py-24 bg-background relative"
+        style={
+          settings.aboutBioBg
+            ? {
+                backgroundImage: `url(${settings.aboutBioBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.aboutBioBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16 items-start">
             {/* Portrait */}
             <div className="lg:col-span-2">
@@ -224,8 +238,22 @@ export default function AboutPage() {
       </section>
 
       {/* Values Grid */}
-      <section className="py-16 lg:py-20 bg-card border-y border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="py-16 lg:py-20 bg-card border-y border-border relative"
+        style={
+          settings.aboutValuesBg
+            ? {
+                backgroundImage: `url(${settings.aboutValuesBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.aboutValuesBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-12">
             <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
               Principles
@@ -254,8 +282,22 @@ export default function AboutPage() {
       </section>
 
       {/* What I Write About */}
-      <section className="py-16 lg:py-20 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        className="py-16 lg:py-20 bg-background relative"
+        style={
+          settings.aboutWritingBg
+            ? {
+                backgroundImage: `url(${settings.aboutWritingBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.aboutWritingBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-10">
             <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
               Writing
@@ -282,8 +324,22 @@ export default function AboutPage() {
       </section>
 
       {/* Contact CTA */}
-      <section className="py-16 bg-card border-t border-border">
-        <div className="max-w-xl mx-auto px-4 sm:px-6 text-center space-y-4">
+      <section
+        className="py-16 bg-card border-t border-border relative"
+        style={
+          settings.aboutContactBg
+            ? {
+                backgroundImage: `url(${settings.aboutContactBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.aboutContactBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-xl mx-auto px-4 sm:px-6 text-center space-y-4">
           <p className="text-xs font-semibold tracking-widest uppercase text-primary">
             Get in Touch
           </p>

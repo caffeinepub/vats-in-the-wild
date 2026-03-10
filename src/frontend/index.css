@@ -140,4 +140,79 @@
     margin: 2rem 0;
     font-style: italic;
   }
+
+  /* ─── Ken Burns: slow scale + gentle pan ─── */
+  @keyframes kenBurns {
+    0%   { transform: scale(1.00) translate(0%, 0%); }
+    33%  { transform: scale(1.06) translate(-1%, -0.5%); }
+    66%  { transform: scale(1.10) translate(0.8%, 0.8%); }
+    100% { transform: scale(1.05) translate(-0.4%, 0.4%); }
+  }
+
+  .animate-ken-burns {
+    animation: kenBurns 28s ease-in-out infinite alternate;
+    transform-origin: center center;
+  }
+
+  /* ─── Soft breathe: overlay opacity pulse ─── */
+  @keyframes breatheOverlay {
+    0%   { opacity: 0.55; }
+    50%  { opacity: 0.65; }
+    100% { opacity: 0.55; }
+  }
+
+  .animate-breathe-overlay {
+    animation: breatheOverlay 8s ease-in-out infinite;
+  }
+
+  /* ─── Misty drift: subtle horizontal float for section hero overlays ─── */
+  @keyframes mistyDrift {
+    0%   { transform: translateX(0%) scale(1.04); }
+    50%  { transform: translateX(-1.5%) scale(1.07); }
+    100% { transform: translateX(0%) scale(1.04); }
+  }
+
+  .animate-misty-drift {
+    animation: mistyDrift 20s ease-in-out infinite;
+    transform-origin: center center;
+  }
+
+  /* ─── Scroll-reveal: initial hidden state ─── */
+  .reveal-hidden {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal-hidden.reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ─── Stagger delays for reveal children ─── */
+  .reveal-delay-1 { transition-delay: 0.08s; }
+  .reveal-delay-2 { transition-delay: 0.18s; }
+  .reveal-delay-3 { transition-delay: 0.28s; }
+  .reveal-delay-4 { transition-delay: 0.38s; }
+  .reveal-delay-5 { transition-delay: 0.48s; }
+  .reveal-delay-6 { transition-delay: 0.58s; }
+
+  /* ─── Fade up (used by scroll-animate legacy class) ─── */
+  .scroll-animate {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .scroll-animate.opacity-100 {
+    opacity: 1 !important;
+  }
+
+  .scroll-animate.translate-y-0 {
+    transform: translateY(0) !important;
+  }
 }

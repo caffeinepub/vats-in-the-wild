@@ -120,6 +120,17 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   // Latest articles
   latestArticlesLabel: "Recent Writing",
   latestArticlesTitle: "From the Journal",
+  // Homepage inner section backgrounds
+  homepageAboutBg: "",
+  homepageSectionsBg: "",
+  homepageLatestBg: "",
+  homepageNewsletterBg: "",
+  homepageQuoteBg: "",
+  // About page inner section backgrounds
+  aboutBioBg: "",
+  aboutValuesBg: "",
+  aboutWritingBg: "",
+  aboutContactBg: "",
 };
 
 // Map font names to Google Fonts query params

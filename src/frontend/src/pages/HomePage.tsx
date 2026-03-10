@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FeaturedPostSkeleton } from "../components/LoadingSkeleton";
 import NewsletterForm from "../components/NewsletterForm";
 import PostCard from "../components/PostCard";
 import QuoteBlock from "../components/QuoteBlock";
 import { useActiveQuote, useLatestPosts } from "../hooks/useQueries";
+import { useReveal } from "../hooks/useReveal";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 
 const SECTION_DEFAULT_IMAGES = [
@@ -78,39 +79,18 @@ const DEFAULT_POSTS = [
   },
 ];
 
-function useScrollFadeIn() {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("opacity-100", "translate-y-0");
-            entry.target.classList.remove("opacity-0", "translate-y-6");
-            observer.unobserve(entry.target);
-          }
-        }
-      },
-      { threshold: 0.1 },
-    );
-    const els = ref.current.querySelectorAll(".scroll-animate");
-    for (const el of els) {
-      observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, []);
-  return ref;
-}
-
 export default function HomePage() {
   const { data: latestPosts, isLoading: postsLoading } = useLatestPosts(3n);
   const { data: activeQuote } = useActiveQuote();
-  const containerRef = useScrollFadeIn();
   const [heroVisible, setHeroVisible] = useState(false);
   const settings = useSiteSettings();
 
-  // Build section cards from settings (supports 5–8 dynamic sections)
+  // Reveal refs for each scroll section
+  const aboutRef = useReveal<HTMLElement>();
+  const sectionsRef = useReveal<HTMLElement>();
+  const latestRef = useReveal<HTMLElement>();
+  const newsletterRef = useReveal<HTMLElement>();
+
   const sectionCount = Math.min(
     8,
     Math.max(5, Number.parseInt(settings.sectionCount) || 5),
@@ -195,35 +175,35 @@ export default function HomePage() {
     latestPosts && latestPosts.length > 0 ? latestPosts : DEFAULT_POSTS;
 
   return (
-    <div ref={containerRef}>
+    <div>
       {/* ===== HERO ===== */}
       <section
         data-ocid="hero.section"
         className="relative min-h-screen flex items-center justify-center overflow-hidden"
       >
-        {/* Background */}
+        {/* Ken Burns background */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center animate-ken-burns"
           style={{
             backgroundImage: settings.heroBackgroundImage
               ? `url(${settings.heroBackgroundImage})`
               : "url(/assets/generated/hero-forest-dawn.dim_1600x900.jpg)",
           }}
         />
-        {/* Gradient overlay */}
+        {/* Breathing gradient overlay */}
         <div
-          className="absolute inset-0 bg-gradient-to-b"
+          className="absolute inset-0 animate-breathe-overlay"
           style={{
             background: `linear-gradient(to bottom, rgba(0,0,0,${settings.heroOverlayOpacity}) 0%, rgba(0,0,0,${Math.max(0, Number.parseFloat(settings.heroOverlayOpacity) - 0.2).toFixed(2)}) 50%, rgba(0,0,0,${settings.heroOverlayOpacity}) 100%)`,
           }}
         />
 
-        {/* Hero content */}
+        {/* Hero content — cinematic sequential reveal */}
         <div className="relative z-10 text-center px-4 sm:px-6 max-w-4xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 1.0, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
             <p className="text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase text-white/60 mb-6">
               {settings.heroEyebrow}
@@ -231,27 +211,39 @@ export default function HomePage() {
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 36 }}
             animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.9, delay: 0.4 }}
+            transition={{
+              duration: 1.1,
+              delay: 0.55,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="font-display text-5xl sm:text-7xl lg:text-8xl font-bold text-white mb-6 leading-none tracking-tight"
           >
             {settings.heroTitle}
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 24 }}
             animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{
+              duration: 1.0,
+              delay: 0.85,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="font-display text-lg sm:text-xl text-white/70 italic mb-10 max-w-2xl mx-auto"
           >
             {settings.heroTagline}
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={heroVisible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{
+              duration: 0.9,
+              delay: 1.15,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <Link to="/forest-field-notes">
@@ -282,19 +274,42 @@ export default function HomePage() {
         {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40"
-          animate={{ y: [0, 8, 0] }}
-          transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}
+          initial={{ opacity: 0 }}
+          animate={heroVisible ? { opacity: 1, y: [0, 8, 0] } : {}}
+          transition={{
+            opacity: { delay: 1.6, duration: 0.8 },
+            y: {
+              repeat: Number.POSITIVE_INFINITY,
+              duration: 2.2,
+              ease: "easeInOut",
+            },
+          }}
         >
           <ChevronDown size={24} />
         </motion.div>
       </section>
 
       {/* ===== ABOUT PREVIEW ===== */}
-      <section className="py-20 lg:py-28 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        ref={aboutRef}
+        className="py-20 lg:py-28 bg-background relative"
+        style={
+          settings.homepageAboutBg
+            ? {
+                backgroundImage: `url(${settings.homepageAboutBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.homepageAboutBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Portrait */}
-            <div className="scroll-animate opacity-0 translate-y-6 transition-all duration-700">
+            <div className="reveal-hidden">
               <div className="relative max-w-sm mx-auto lg:mx-0">
                 <div className="aspect-[4/5] overflow-hidden rounded-sm">
                   <img
@@ -306,13 +321,12 @@ export default function HomePage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                {/* Decorative border */}
                 <div className="absolute -bottom-4 -right-4 w-full h-full border border-primary/30 rounded-sm -z-10" />
               </div>
             </div>
 
             {/* Text */}
-            <div className="scroll-animate opacity-0 translate-y-6 transition-all duration-700 delay-150 space-y-6">
+            <div className="reveal-hidden reveal-delay-2 space-y-6">
               <div>
                 <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
                   About
@@ -344,9 +358,25 @@ export default function HomePage() {
       </section>
 
       {/* ===== FEATURED SECTIONS GRID ===== */}
-      <section id="sections" className="py-20 bg-card border-y border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 scroll-animate opacity-0 translate-y-6 transition-all duration-700">
+      <section
+        id="sections"
+        ref={sectionsRef}
+        className="py-20 bg-card border-y border-border relative"
+        style={
+          settings.homepageSectionsBg
+            ? {
+                backgroundImage: `url(${settings.homepageSectionsBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.homepageSectionsBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 reveal-hidden">
             <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
               Explore
             </p>
@@ -364,7 +394,7 @@ export default function HomePage() {
                 key={`${section.to}-${i}`}
                 to={section.to as never}
                 data-ocid={`sections.card.${i + 1}`}
-                className="group scroll-animate opacity-0 translate-y-6 transition-all duration-700 block bg-background border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary/40"
+                className="group reveal-hidden block bg-background border border-border overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-primary/40 transition-[box-shadow,border-color,transform] duration-300"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 <div className="aspect-[16/9] overflow-hidden">
@@ -401,9 +431,24 @@ export default function HomePage() {
       </section>
 
       {/* ===== LATEST ARTICLES ===== */}
-      <section className="py-20 lg:py-28 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between mb-12 scroll-animate opacity-0 translate-y-6 transition-all duration-700">
+      <section
+        ref={latestRef}
+        className="py-20 lg:py-28 bg-background relative"
+        style={
+          settings.homepageLatestBg
+            ? {
+                backgroundImage: `url(${settings.homepageLatestBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.homepageLatestBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12 reveal-hidden">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
                 {settings.latestArticlesLabel}
@@ -422,7 +467,7 @@ export default function HomePage() {
 
           <div
             data-ocid="latest_articles.list"
-            className="space-y-4 scroll-animate opacity-0 translate-y-6 transition-all duration-700 delay-150"
+            className="space-y-4 reveal-hidden reveal-delay-2"
           >
             {postsLoading ? (
               <>
@@ -445,21 +490,54 @@ export default function HomePage() {
       </section>
 
       {/* ===== QUOTE OF THE MONTH ===== */}
-      <AnimatePresence>
-        {activeQuote ? (
-          <QuoteBlock text={activeQuote.text} author={activeQuote.author} />
-        ) : (
-          <QuoteBlock
-            text="The forest is not a resource to be exploited but a world to be understood — a living archive of evolutionary time, patient and indifferent to our urgency."
-            author="Shubham Vats"
-          />
+      <div
+        className="relative"
+        style={
+          settings.homepageQuoteBg
+            ? {
+                backgroundImage: `url(${settings.homepageQuoteBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.homepageQuoteBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
         )}
-      </AnimatePresence>
+        <div className="relative z-10">
+          <AnimatePresence>
+            {activeQuote ? (
+              <QuoteBlock text={activeQuote.text} author={activeQuote.author} />
+            ) : (
+              <QuoteBlock
+                text="The forest is not a resource to be exploited but a world to be understood — a living archive of evolutionary time, patient and indifferent to our urgency."
+                author="Shubham Vats"
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
 
       {/* ===== NEWSLETTER ===== */}
-      <section className="py-20 bg-background border-y border-border">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <div className="scroll-animate opacity-0 translate-y-6 transition-all duration-700 space-y-6">
+      <section
+        ref={newsletterRef}
+        className="py-20 bg-background border-y border-border relative"
+        style={
+          settings.homepageNewsletterBg
+            ? {
+                backgroundImage: `url(${settings.homepageNewsletterBg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined
+        }
+      >
+        {settings.homepageNewsletterBg && (
+          <div className="absolute inset-0 bg-background/80 pointer-events-none" />
+        )}
+        <div className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 text-center">
+          <div className="reveal-hidden space-y-6">
             <div>
               <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3">
                 {settings.newsletterLabel}

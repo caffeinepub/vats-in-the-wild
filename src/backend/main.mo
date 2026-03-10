@@ -12,10 +12,11 @@ import Nat "mo:core/Nat";
 
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
-import Migration "migration";
+
+
 
 // Enable data migration via migration module and with-clause
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 
@@ -99,13 +100,11 @@ actor {
     heroCtaPrimary : Text;
     heroCtaSecondary : Text;
     heroOverlayOpacity : Text;
-
     aboutPreviewText1 : Text;
     aboutPreviewText2 : Text;
     aboutPreviewName : Text;
     aboutPreviewSubtitle : Text;
     aboutPortraitUrl : Text;
-
     footerTagline : Text;
     footerDescription : Text;
     footerEmail : Text;
@@ -115,21 +114,18 @@ actor {
     footerQuoteText : Text;
     footerQuoteAuthor : Text;
     footerCopyright : Text;
-
     colorBackground : Text;
     colorForeground : Text;
     colorPrimary : Text;
     colorCard : Text;
     colorMuted : Text;
     colorBorder : Text;
-
     headingFont : Text;
     bodyFont : Text;
     baseFontSize : Text;
     containerMaxWidth : Text;
     sectionPadding : Text;
     borderRadius : Text;
-
     section1Title : Text;
     section1Description : Text;
     section1Label : Text;
@@ -145,7 +141,6 @@ actor {
     section5Title : Text;
     section5Description : Text;
     section5Label : Text;
-
     sectionCount : Text;
     section6Title : Text;
     section6Description : Text;
@@ -156,7 +151,6 @@ actor {
     section8Title : Text;
     section8Description : Text;
     section8Label : Text;
-
     heroBackgroundImage : Text;
     section1Image : Text;
     section2Image : Text;
@@ -172,7 +166,6 @@ actor {
     wildPageBg : Text;
     essaysPageBg : Text;
     aboutPageBg : Text;
-
     irTitle : Text;
     irDescription : Text;
     irLabel : Text;
@@ -190,13 +183,22 @@ actor {
     essaysLabel : Text;
     aboutPageTitle : Text;
     aboutPageSubtitle : Text;
-
     newsletterLabel : Text;
     newsletterTitle : Text;
     newsletterSubtitle : Text;
     newsletterPlaceholder : Text;
     latestArticlesLabel : Text;
     latestArticlesTitle : Text;
+    // NEW FIELDS
+    homepageAboutBg : Text;
+    homepageSectionsBg : Text;
+    homepageLatestBg : Text;
+    homepageNewsletterBg : Text;
+    homepageQuoteBg : Text;
+    aboutBioBg : Text;
+    aboutValuesBg : Text;
+    aboutWritingBg : Text;
+    aboutContactBg : Text;
   };
 
   module PostEntity {
@@ -702,6 +704,16 @@ actor {
           newsletterPlaceholder = "Your email address";
           latestArticlesLabel = "Recent Writing";
           latestArticlesTitle = "From the Journal";
+          // New Fields
+          homepageAboutBg = "";
+          homepageSectionsBg = "";
+          homepageLatestBg = "";
+          homepageNewsletterBg = "";
+          homepageQuoteBg = "";
+          aboutBioBg = "";
+          aboutValuesBg = "";
+          aboutWritingBg = "";
+          aboutContactBg = "";
         };
       };
     };
